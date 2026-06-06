@@ -621,6 +621,7 @@ function doLogout(){
   document.getElementById('form-normal').style.display='block';
   document.getElementById('form-suporte').style.display='none';
   document.getElementById('card-hoje-normal').style.display='block';
+  document.getElementById('hdr-mes').style.display='';
   // Resetar nav
   document.querySelectorAll('[data-roles]').forEach(b=>b.classList.remove('hidden'));
   hide('app');show('login-screen');
@@ -640,11 +641,10 @@ function applyRoles(){
   });
   if(CU.perfil==='funcionario'||CU.perfil==='suporte')document.getElementById('btn-import-lbl').classList.add('hidden');
   if(CU.perfil==='suporte'){
-    // Mostrar formulário limpo sem nenhum valor financeiro
     document.getElementById('form-normal').style.display='none';
     document.getElementById('form-suporte').style.display='block';
     document.getElementById('card-hoje-normal').style.display='none';
-    // Inicializar campos do formulário suporte
+    document.getElementById('hdr-mes').style.display='none';
     document.getElementById('fs-data').value=today();
     const fsProd=document.getElementById('fs-prod');
     fsProd.innerHTML=PRODS.map(p=>`<option>${p.nome}</option>`).join('');
