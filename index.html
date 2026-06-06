@@ -172,10 +172,10 @@ tr:hover td{background:var(--bg3)}
   </div>
   <nav class="nav" id="main-nav">
     <button class="nav-btn active" data-sec="lanc" onclick="showSec(this)">+ Lançamento</button>
-    <button class="nav-btn" data-sec="ops" onclick="showSec(this)" data-roles="financeiro,dono,esposa">Operações</button>
-    <button class="nav-btn" data-sec="prod" onclick="showSec(this)" data-roles="financeiro,dono,esposa">Produtores</button>
-    <button class="nav-btn" data-sec="pag" onclick="showSec(this)" data-roles="financeiro,dono,esposa">Pagamentos</button>
-    <button class="nav-btn" data-sec="luc" onclick="showSec(this)" data-roles="financeiro,dono,esposa">Lucros</button>
+    <button class="nav-btn" data-sec="ops" onclick="showSec(this)" data-roles="financeiro,dono,luciene">Operações</button>
+    <button class="nav-btn" data-sec="prod" onclick="showSec(this)" data-roles="financeiro,dono,luciene">Produtores</button>
+    <button class="nav-btn" data-sec="pag" onclick="showSec(this)" data-roles="financeiro,dono,luciene">Pagamentos</button>
+    <button class="nav-btn" data-sec="luc" onclick="showSec(this)" data-roles="financeiro,dono,luciene">Lucros</button>
     <button class="nav-btn" data-sec="cfg" onclick="showSec(this)" data-roles="financeiro,dono">Config</button>
   </nav>
   <div class="main">
@@ -189,10 +189,12 @@ tr:hover td{background:var(--bg3)}
           <div class="fg"><label>Data</label><input type="date" id="f-data"></div>
           <div class="fg"><label>Loja</label>
             <select id="f-loja" onchange="onLojaChange()">
-              <option>Caruaru</option><option>Altinho</option>
+              <option value="Caruaru">Caruaru</option>
+              <option value="Altinho">Altinho</option>
+              <option value="Produtor">Produtor</option>
             </select>
           </div>
-          <div class="fg"><label>Produtor</label>
+          <div class="fg" id="prod-wrap" style="display:none"><label>Produtor</label>
             <select id="f-prod" onchange="onProdChange()"></select>
           </div>
           <div class="fg"><label>Empresa</label>
@@ -511,7 +513,17 @@ function applyRoles(){
     if(!roles.includes(CU.perfil))b.classList.add('hidden');
     else b.classList.remove('hidden');
   });
-  if(CU.perfil==='funcionario')document.getElementById('btn-import-lbl').classList.add('hidden');
+  if(CU.perfil==='funcionario'||CU.perfil==='suporte')document.getElementById('btn-import-lbl').classList.add('hidden');
+  // suporte: esconder comissão e lucro no formulário
+  if(CU.perfil==='suporte'){
+    document.getElementById('taxas-info').classList.add('hidden');
+    document.getElementById('preview').classList.add('hidden');
+    document.getElementById('prev-alert').classList.add('hidden');
+    document.getElementById('manual-wrap').classList.add('hidden');
+    // esconder botão manual
+    const btns=document.querySelectorAll('.btn-row button');
+    btns.forEach(b=>{if(b.textContent.includes('Manual'))b.classList.add('hidden');});
+  }
 }
 
 function showSec(btn){
@@ -540,14 +552,21 @@ function showTab(btn,id){
 
 function initForm(){
   document.getElementById('f-data').value=today();
+  document.getElementById('prod-wrap').style.display='none';
   const sel=document.getElementById('f-prod');
-  const loja=document.getElementById('f-loja').value;
-  sel.innerHTML=`<option value="__loja__">— ${loja} (própria) —</option>${PRODS.map(p=>`<option>${p.nome}</option>`).join('')}`;
+  sel.innerHTML=`<option value="__loja__">— Caruaru (própria) —</option>`;
 }
 function onLojaChange(){
   const loja=document.getElementById('f-loja').value;
   const sel=document.getElementById('f-prod');
-  sel.innerHTML=`<option value="__loja__">— ${loja} (própria) —</option>${PRODS.map(p=>`<option>${p.nome}</option>`).join('')}`;
+  const prodWrap=document.getElementById('prod-wrap');
+  if(loja==='Produtor'){
+    prodWrap.style.display='flex';
+    sel.innerHTML=PRODS.map(p=>`<option>${p.nome}</option>`).join('');
+  } else {
+    prodWrap.style.display='none';
+    sel.innerHTML=`<option value="__loja__">— ${loja} (própria) —</option>`;
+  }
   autoFill();
 }
 function onProdChange(){autoFill();}
@@ -613,8 +632,9 @@ function toggleManual(){document.getElementById('manual-wrap').classList.toggle(
 
 async function salvarOp(){
   const data=document.getElementById('f-data').value||today();
-  const loja=document.getElementById('f-loja').value;
+  const lojaSelect=document.getElementById('f-loja').value;
   const prodVal=document.getElementById('f-prod').value;
+  const loja=lojaSelect==='Produtor'?(prodVal||'Produtor'):lojaSelect;
   const produtor=prodVal==='__loja__'?loja:prodVal;
   const band=document.getElementById('f-band').value;
   const bandLabel=band==='master'?'Visa/Master':'Hiper/Elo/Amex';
@@ -624,7 +644,7 @@ async function salvarOp(){
   const vp=parseFloat(document.getElementById('f-vp').value);
   const vl=parseFloat(document.getElementById('f-vl').value);
   const papl=parseFloat(document.getElementById('f-papl').value)||0;
-  const isLoja=prodVal==='__loja__';
+  const isLoja=prodVal==='__loja__'||lojaSelect!=='Produtor';
   if(!vp||!vl){showAl('lanc','Preencha valor passado e valor liberado.','danger');return;}
   if(vl>=vp){showAl('lanc','Valor liberado deve ser menor que o passado.','danger');return;}
   const{te,cp}=getEfetivo();
