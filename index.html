@@ -195,6 +195,12 @@ tr:hover td{background:var(--bg3)}
           <div class="fg"><label>Produtor</label>
             <select id="f-prod" onchange="onProdChange()"></select>
           </div>
+          <div class="fg"><label>Empresa</label>
+            <select id="f-empresa" onchange="autoFill()">
+              <option value="WN">WN</option>
+              <option value="Valle">Valle</option>
+            </select>
+          </div>
           <div class="fg"><label>Bandeira</label>
             <select id="f-band" onchange="autoFill()">
               <option value="master">Visa / Mastercard</option>
@@ -250,7 +256,7 @@ tr:hover td{background:var(--bg3)}
         <div class="card-title">Lançamentos de hoje</div>
         <div id="hoje-met" class="metric-grid"></div>
         <div class="tbl-wrap"><table>
-          <thead><tr><th>Hora</th><th>Loja</th><th>Produtor</th><th>Bandeira</th><th>Parc.</th><th>Vl.passado</th><th>Vl.liberado</th><th>%Aplic.</th><th>L.bruto</th><th>Comissão</th><th>L.líquido</th><th></th></tr></thead>
+          <thead><tr><th>Hora</th><th>Loja</th><th>Produtor</th><th>Empresa</th><th>Bandeira</th><th>Parc.</th><th>Vl.passado</th><th>Vl.liberado</th><th>%Aplic.</th><th>L.bruto</th><th>Comissão</th><th>L.líquido</th><th></th></tr></thead>
           <tbody id="hoje-tb"></tbody>
         </table></div>
       </div>
@@ -268,7 +274,7 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div id="ops-met" class="metric-grid"></div>
         <div class="tbl-wrap"><table>
-          <thead><tr><th>Data</th><th>Loja</th><th>Produtor</th><th>Bandeira</th><th>Parc.</th><th>Vl.passado</th><th>Vl.liberado</th><th>%Aplic.</th><th>Taxa</th><th>L.bruto</th><th>Comissão</th><th>L.líquido</th><th></th></tr></thead>
+          <thead><tr><th>Data</th><th>Loja</th><th>Produtor</th><th>Empresa</th><th>Bandeira</th><th>Parc.</th><th>Vl.passado</th><th>Vl.liberado</th><th>%Aplic.</th><th>Taxa</th><th>L.bruto</th><th>Comissão</th><th>L.líquido</th><th></th></tr></thead>
           <tbody id="ops-tb"></tbody>
         </table></div>
         <div style="font-size:12px;color:var(--text3);margin-top:8px" id="ops-info"></div>
@@ -397,6 +403,9 @@ const HDR={headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Ty
 const GERENTE=['jayana','katia','kátia','daniel','erika','well','juliana'];
 const TAXA_M={'D':2.74,'1':3.74,'2':4.58,'3':5.23,'4':5.87,'5':6.51,'6':7.14,'7':7.96,'8':8.58,'9':9.19,'10':9.80,'11':10.40,'12':11.00,'13':12.39,'14':12.98,'15':13.56,'16':14.14,'17':14.71,'18':15.28};
 const TAXA_H={'D':2.74,'1':4.44,'2':5.62,'3':6.27,'4':6.91,'5':7.55,'6':8.18,'7':9.59,'8':10.21,'9':10.82,'10':11.43,'11':12.03,'12':12.63,'13':13.22,'14':13.81,'15':14.39,'16':14.97,'17':15.54,'18':16.11};
+// VALLE
+const TAXA_VALLE_M={'1':3.44,'2':4.28,'3':4.93,'4':5.57,'5':6.21,'6':6.84,'7':7.66,'8':8.28,'9':8.89,'10':9.50,'11':10.11,'12':10.70,'13':12.09,'14':12.68,'15':13.26,'16':13.84,'17':14.61,'18':14.98};
+const TAXA_VALLE_H={'1':4.14,'2':5.32,'3':5.97,'4':6.61,'5':7.25,'6':7.88,'7':9.29,'8':9.91,'9':10.52,'10':11.13,'11':11.74,'12':12.33,'13':12.92,'14':13.51,'15':14.09,'16':14.67,'17':15.24,'18':15.81};
 const TABS=[
   {n:'Tabela 1',m:{f1:{mn:16,mx:99,c:4.20},f2:{mn:22,mx:99,c:5.20},f3:{mn:30,mx:99,c:6.20}},h:{f1:{mn:17,mx:99,c:3.60},f2:{mn:23,mx:99,c:4.10},f3:{mn:31,mx:99,c:5.00}}},
   {n:'Tabela 2',m:{f1:{mn:15,mx:15.99,c:3.60},f2:{mn:20,mx:21.99,c:4.70},f3:{mn:28,mx:29.99,c:5.10}},h:{f1:{mn:16,mx:16.99,c:3.00},f2:{mn:21,mx:22.99,c:3.20},f3:{mn:29,mx:30.99,c:4.00}}},
@@ -438,7 +447,10 @@ function show(id){document.getElementById(id).classList.remove('hidden');}
 function hide(id){document.getElementById(id).classList.add('hidden');}
 
 function getFaixa(p){const n=parseInt(p);if(isNaN(n))return null;if(n<=6)return'f1';if(n<=12)return'f2';if(n<=18)return'f3';return null;}
-function getTaxaEmp(band,parc){return(band==='master'?TAXA_M:TAXA_H)[parc]||0;}
+function getTaxaEmp(band,parc,empresa){
+  if(empresa==='Valle'){return(band==='master'?TAXA_VALLE_M:TAXA_VALLE_H)[parc]||0;}
+  return(band==='master'?TAXA_M:TAXA_H)[parc]||0;
+}
 function detectTab(band,parc,papl){
   if(!papl||papl<=0)return null;
   const f=getFaixa(parc);if(!f)return null;
@@ -546,8 +558,9 @@ function autoFill(){
   const band=document.getElementById('f-band').value;
   const parc=document.getElementById('f-parc').value;
   const papl=parseFloat(document.getElementById('f-papl').value)||0;
+  const empresa=document.getElementById('f-empresa').value;
   const isLoja=document.getElementById('f-prod').value==='__loja__';
-  _aTE=getTaxaEmp(band,parc);_aCom=0;_aTab='';_aSC=false;_aEsp=false;
+  _aTE=getTaxaEmp(band,parc,empresa);_aCom=0;_aTab='';_aSC=false;_aEsp=false;
   const ti=document.getElementById('taxas-info');
   if(_aTE>0){
     ti.classList.remove('hidden');ti.style.display='flex';
@@ -605,6 +618,7 @@ async function salvarOp(){
   const produtor=prodVal==='__loja__'?loja:prodVal;
   const band=document.getElementById('f-band').value;
   const bandLabel=band==='master'?'Visa/Master':'Hiper/Elo/Amex';
+  const empresa=document.getElementById('f-empresa').value;
   const parc=document.getElementById('f-parc').value;
   const banco=document.getElementById('f-banco').value;
   const vp=parseFloat(document.getElementById('f-vp').value);
@@ -624,6 +638,7 @@ async function salvarOp(){
     taxa_emp:te,com_prod:cp,tabela:_aTab,
     taxa:r.taxa,sobra:r.sobra,lb:r.lb,com:r.com,ll:r.ll,
     sem_com:_aSC,especial:_aEsp,manual,
+    empresa,
     hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
     fonte:'manual'
   };
@@ -655,6 +670,7 @@ async function renderHoje(){
   const d=today();
   const ops=await sbGet('operacoes',`data=eq.${d}&order=id.asc`);
   const tb=document.getElementById('hoje-tb'),met=document.getElementById('hoje-met');
+  _lastOps=ops;
   if(!Array.isArray(ops)||!ops.length){
     tb.innerHTML='<tr><td colspan="12" class="empty">Nenhuma operação hoje.</td></tr>';
     met.innerHTML='';return;
@@ -671,15 +687,42 @@ async function renderHoje(){
     <td>${o.hora||'—'}</td>
     <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
     <td>${o.produtor}${o.manual?'<span class="tag-m">manual</span>':''}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
+    <td><span class="badge ${o.empresa==='Valle'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
     <td>${o.bandeira||'—'}</td>
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
     <td>${o.paplicada?fmtP(o.paplicada):'—'}</td>
     <td>${fmt(o.lb)}</td><td>${fmt(o.com)}</td>
     <td style="color:var(--green);font-weight:600">${fmt(o.ll)}</td>
-    <td><button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="delOp(${o.id})">✕</button></td>
+    <td style="display:flex;gap:4px">
+      <button class="btn" style="padding:3px 8px;font-size:11px" onclick="copiarOp(${o.id})" title="Copiar">⧉</button>
+      <button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="delOp(${o.id})" title="Excluir">✕</button>
+    </td>
   </tr>`).join('');
 }
+
+function copiarOp(id){
+  const op=_lastOps?_lastOps.find(o=>o.id===id):null;
+  if(!op)return;
+  document.getElementById('f-data').value=today();
+  document.getElementById('f-loja').value=op.loja;
+  if(op.empresa)document.getElementById('f-empresa').value=op.empresa;
+  document.getElementById('f-band').value=op.band_code||'master';
+  document.getElementById('f-parc').value=op.parcelas;
+  document.getElementById('f-papl').value=op.paplicada||'';
+  document.getElementById('f-banco').value=op.banco||'';
+  document.getElementById('f-vp').value=op.vpassado;
+  document.getElementById('f-vl').value=op.vliberado;
+  onLojaChange();
+  // selecionar produtor
+  const sel=document.getElementById('f-prod');
+  for(let i=0;i<sel.options.length;i++){if(sel.options[i].value===op.produtor||sel.options[i].text===op.produtor){sel.selectedIndex=i;break;}}
+  autoFill();
+  // scroll para o topo
+  document.getElementById('sec-lanc').scrollIntoView();
+  showAl('lanc','Operação copiada! Verifique os dados e salve.','info');
+}
+let _lastOps=[];
 
 async function delOp(id){
   if(!confirm('Excluir operação?'))return;
@@ -722,6 +765,7 @@ async function renderOps(){
     <td>${o.data}</td>
     <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
     <td>${o.produtor}${o.manual?'<span class="tag-m">manual</span>':''}</td>
+    <td><span class="badge ${o.empresa==='Valle'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
     <td>${o.bandeira||'—'}</td>
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
@@ -977,8 +1021,25 @@ async function resetDados(){
   alert('Dados apagados.');renderHoje();renderOps();updateHdr();
 }
 
-function exportCSV(){
-  alert('Use o filtro de operações e clique em CSV.');
+async function exportCSV(){
+  const de=document.getElementById('fop-de').value||'';
+  const ate=document.getElementById('fop-ate').value||'';
+  const lj=document.getElementById('fop-lj').value||'';
+  const pr=document.getElementById('fop-pr').value||'';
+  let params='order=data.desc&limit=5000';
+  if(de)params+=`&data=gte.${de}`;
+  if(ate)params+=`&data=lte.${ate}`;
+  if(lj)params+=`&loja=eq.${lj}`;
+  if(pr)params+=`&produtor=eq.${pr}`;
+  const ops=await sbGet('operacoes',params);
+  if(!ops||!ops.length){alert('Nenhuma operação para exportar.');return;}
+  const h='Data,Loja,Produtor,Empresa,Bandeira,Parcelas,Banco,Vl.Passado,Vl.Liberado,%Aplicada,Taxa%,Lucro Bruto,Comissão,Lucro Líquido';
+  const r=ops.map(o=>[o.data,o.loja,o.produtor,o.empresa||'WN',o.bandeira||'',o.parcelas,o.banco||'',o.vpassado,o.vliberado,o.paplicada||'',o.taxa_emp||'',(o.lb||0).toFixed(2),(o.com||0).toFixed(2),(o.ll||0).toFixed(2)].join(','));
+  const csv=[h,...r].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=`ferreira_cred_${de||'inicio'}_${ate||'fim'}.csv`;
+  a.click();
 }
 
 // Importar Excel
