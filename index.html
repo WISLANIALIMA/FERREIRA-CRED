@@ -182,7 +182,57 @@ tr:hover td{background:var(--bg3)}
 
     <!-- LANÇAMENTO -->
     <div class="section active" id="sec-lanc">
-      <div class="card">
+      <!-- FORMULÁRIO SUPORTE - sem valores financeiros -->
+      <div class="card" id="form-suporte" style="display:none">
+        <div class="card-title">Novo lançamento</div>
+        <div id="al-lanc-s"></div>
+        <div class="form-grid">
+          <div class="fg"><label>Data</label><input type="date" id="fs-data"></div>
+          <div class="fg"><label>Loja</label>
+            <select id="fs-loja" onchange="onLojaChangeS()">
+              <option value="Caruaru">Caruaru</option>
+              <option value="Altinho">Altinho</option>
+              <option value="Produtor">Produtor</option>
+            </select>
+          </div>
+          <div class="fg" id="fs-prod-wrap" style="display:none"><label>Produtor</label>
+            <select id="fs-prod"></select>
+          </div>
+          <div class="fg"><label>Empresa</label>
+            <select id="fs-empresa">
+              <option value="WN">WN</option>
+              <option value="Valle">Valle</option>
+            </select>
+          </div>
+          <div class="fg"><label>Bandeira</label>
+            <select id="fs-band">
+              <option value="master">Visa / Mastercard</option>
+              <option value="hiper">Hiper / Elo / Amex</option>
+            </select>
+          </div>
+          <div class="fg"><label>Banco</label><input type="text" id="fs-banco" placeholder="Ex: Nubank"></div>
+          <div class="fg"><label>Parcelas</label>
+            <select id="fs-parc">
+              <option value="D">Débito</option>
+              <option value="1">1x</option><option value="2">2x</option><option value="3">3x</option>
+              <option value="4">4x</option><option value="5">5x</option><option value="6">6x</option>
+              <option value="7">7x</option><option value="8">8x</option><option value="9">9x</option>
+              <option value="10">10x</option><option value="11">11x</option><option value="12" selected>12x</option>
+              <option value="13">13x</option><option value="14">14x</option><option value="15">15x</option>
+              <option value="16">16x</option><option value="17">17x</option><option value="18">18x</option>
+            </select>
+          </div>
+          <div class="fg"><label>Valor passado (R$)</label><input type="number" id="fs-vp" placeholder="Ex: 1176" step="0.01"></div>
+          <div class="fg"><label>Valor liberado (R$)</label><input type="number" id="fs-vl" placeholder="Ex: 1000" step="0.01"></div>
+          <div class="fg"><label>% aplicada</label><input type="number" id="fs-papl" placeholder="Ex: 17.48" step="0.01"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="salvarOpSuporte()">✓ Salvar</button>
+          <button class="btn" onclick="limparFormS()">Limpar</button>
+        </div>
+      </div>
+      <!-- FORMULÁRIO NORMAL -->
+      <div class="card" id="form-normal">
         <div class="card-title">Nova operação</div>
         <div id="al-lanc"></div>
         <div class="form-grid">
@@ -254,7 +304,8 @@ tr:hover td{background:var(--bg3)}
           <button class="btn" onclick="limparForm()">Limpar</button>
         </div>
       </div>
-      <div class="card">
+      </div><!-- /form-normal -->
+      <div class="card" id="card-hoje-normal">
         <div class="card-title">Lançamentos de hoje</div>
         <div id="hoje-met" class="metric-grid"></div>
         <div class="tbl-wrap"><table>
@@ -481,6 +532,65 @@ async function sbGetAll(table, params=''){
   return all;
 }
 
+
+function onLojaChangeS(){
+  const loja=document.getElementById('fs-loja').value;
+  const wrap=document.getElementById('fs-prod-wrap');
+  const sel=document.getElementById('fs-prod');
+  if(loja==='Produtor'){
+    wrap.style.display='flex';
+    sel.innerHTML=PRODS.map(p=>`<option>${p.nome}</option>`).join('');
+  } else {
+    wrap.style.display='none';
+  }
+}
+
+async function salvarOpSuporte(){
+  const data=document.getElementById('fs-data').value||today();
+  const lojaSelect=document.getElementById('fs-loja').value;
+  const prodVal=lojaSelect==='Produtor'?document.getElementById('fs-prod').value:'__loja__';
+  const loja=lojaSelect==='Produtor'?(prodVal||'Produtor'):lojaSelect;
+  const empresa=document.getElementById('fs-empresa').value;
+  const band=document.getElementById('fs-band').value;
+  const bandLabel=band==='master'?'Visa/Master':'Hiper/Elo/Amex';
+  const parc=document.getElementById('fs-parc').value;
+  const banco=document.getElementById('fs-banco').value;
+  const vp=parseFloat(document.getElementById('fs-vp').value);
+  const vl=parseFloat(document.getElementById('fs-vl').value);
+  const papl=parseFloat(document.getElementById('fs-papl').value)||0;
+  const isLoja=prodVal==='__loja__';
+  if(!vp||!vl){
+    document.getElementById('al-lanc-s').innerHTML='<div class="alert alert-danger">Preencha valor passado e valor liberado.</div>';
+    setTimeout(()=>{document.getElementById('al-lanc-s').innerHTML='';},3000);return;
+  }
+  const te=getTaxaEmp(band,parc,empresa);
+  let cp=0,tabNome='',semCom=false,especial=false;
+  if(!isLoja&&papl>0){const det=detectTab(band,parc,papl);if(det){cp=det.c;tabNome=det.n;semCom=!!det.sc;especial=!!det.esp;}}
+  const r=calcOp(vp,vl,te,cp);
+  const op={id:Date.now(),data,loja,produtor:isLoja?loja:prodVal,is_loja_propria:isLoja,
+    bandeira:bandLabel,band_code:band,empresa,parcelas:parc,banco,
+    vpassado:vp,vliberado:vl,paplicada:papl,taxa_emp:te,com_prod:cp,tabela:tabNome,
+    taxa:r.taxa,sobra:r.sobra,lb:r.lb,com:r.com,ll:r.ll,
+    sem_com:semCom,especial,manual:false,
+    hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),fonte:'manual'};
+  const resp=await sbPost('operacoes',[op]);
+  if(resp.ok||resp.status===201){
+    document.getElementById('al-lanc-s').innerHTML='<div class="alert alert-success">✓ Lançamento salvo!</div>';
+    setTimeout(()=>{document.getElementById('al-lanc-s').innerHTML='';},3000);
+    limparFormS();
+  } else {
+    const err=await resp.text();
+    document.getElementById('al-lanc-s').innerHTML=`<div class="alert alert-danger">Erro: ${err}</div>`;
+  }
+}
+
+function limparFormS(){
+  ['fs-vp','fs-vl','fs-papl','fs-banco'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fs-data').value=today();
+  document.getElementById('fs-loja').value='Caruaru';
+  document.getElementById('fs-prod-wrap').style.display='none';
+}
+
 async function init(){
   try{
     const users=await sbGet('usuarios','select=*');
@@ -505,9 +615,24 @@ async function doLogin(){
   document.getElementById('hdr-user').textContent=user.nome;
   applyRoles();initForm();renderHoje();updateHdr();
 }
-function doLogout(){CU=null;hide('app');show('login-screen');document.getElementById('lu').value='';document.getElementById('lp').value='';}
+function doLogout(){
+  CU=null;
+  // Resetar formulários para estado padrão
+  document.getElementById('form-normal').style.display='block';
+  document.getElementById('form-suporte').style.display='none';
+  document.getElementById('card-hoje-normal').style.display='block';
+  // Resetar nav
+  document.querySelectorAll('[data-roles]').forEach(b=>b.classList.remove('hidden'));
+  hide('app');show('login-screen');
+  document.getElementById('lu').value='';document.getElementById('lp').value='';
+}
 
 function applyRoles(){
+  // Resetar formulários
+  document.getElementById('form-normal').style.display='block';
+  document.getElementById('form-suporte').style.display='none';
+  document.getElementById('card-hoje-normal').style.display='block';
+
   document.querySelectorAll('[data-roles]').forEach(b=>{
     const roles=b.getAttribute('data-roles').split(',');
     if(!roles.includes(CU.perfil))b.classList.add('hidden');
@@ -515,22 +640,14 @@ function applyRoles(){
   });
   if(CU.perfil==='funcionario'||CU.perfil==='suporte')document.getElementById('btn-import-lbl').classList.add('hidden');
   if(CU.perfil==='suporte'){
-    // Esconder tudo relacionado a valores financeiros
-    const hideIds=['taxas-info','preview','prev-alert','manual-wrap'];
-    hideIds.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
-    // Adicionar CSS para esconder preview permanentemente para suporte
-    const style=document.createElement('style');
-    style.textContent=`
-      #taxas-info{display:none!important}
-      #preview{display:none!important}
-      #prev-alert{display:none!important}
-      #manual-wrap{display:none!important}
-      .btn-row button:nth-child(2){display:none!important}
-      #hoje-tb td:nth-child(9),#hoje-tb td:nth-child(10),#hoje-tb td:nth-child(11),
-      #hoje-tb th:nth-child(9),#hoje-tb th:nth-child(10),#hoje-tb th:nth-child(11){display:none!important}
-      #hoje-met{display:none!important}
-    `;
-    document.head.appendChild(style);
+    // Mostrar formulário limpo sem nenhum valor financeiro
+    document.getElementById('form-normal').style.display='none';
+    document.getElementById('form-suporte').style.display='block';
+    document.getElementById('card-hoje-normal').style.display='none';
+    // Inicializar campos do formulário suporte
+    document.getElementById('fs-data').value=today();
+    const fsProd=document.getElementById('fs-prod');
+    fsProd.innerHTML=PRODS.map(p=>`<option>${p.nome}</option>`).join('');
   }
 }
 
