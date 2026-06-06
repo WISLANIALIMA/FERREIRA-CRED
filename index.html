@@ -514,15 +514,23 @@ function applyRoles(){
     else b.classList.remove('hidden');
   });
   if(CU.perfil==='funcionario'||CU.perfil==='suporte')document.getElementById('btn-import-lbl').classList.add('hidden');
-  // suporte: esconder comissão e lucro no formulário
   if(CU.perfil==='suporte'){
-    document.getElementById('taxas-info').classList.add('hidden');
-    document.getElementById('preview').classList.add('hidden');
-    document.getElementById('prev-alert').classList.add('hidden');
-    document.getElementById('manual-wrap').classList.add('hidden');
-    // esconder botão manual
-    const btns=document.querySelectorAll('.btn-row button');
-    btns.forEach(b=>{if(b.textContent.includes('Manual'))b.classList.add('hidden');});
+    // Esconder tudo relacionado a valores financeiros
+    const hideIds=['taxas-info','preview','prev-alert','manual-wrap'];
+    hideIds.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
+    // Adicionar CSS para esconder preview permanentemente para suporte
+    const style=document.createElement('style');
+    style.textContent=`
+      #taxas-info{display:none!important}
+      #preview{display:none!important}
+      #prev-alert{display:none!important}
+      #manual-wrap{display:none!important}
+      .btn-row button:nth-child(2){display:none!important}
+      #hoje-tb td:nth-child(9),#hoje-tb td:nth-child(10),#hoje-tb td:nth-child(11),
+      #hoje-tb th:nth-child(9),#hoje-tb th:nth-child(10),#hoje-tb th:nth-child(11){display:none!important}
+      #hoje-met{display:none!important}
+    `;
+    document.head.appendChild(style);
   }
 }
 
@@ -605,6 +613,7 @@ function getEfetivo(){
 }
 
 function calcPreview(){
+  if(CU&&CU.perfil==='suporte'){hide('preview');return;}
   const vp=parseFloat(document.getElementById('f-vp').value)||0;
   const vl=parseFloat(document.getElementById('f-vl').value)||0;
   if(!vp||!vl){hide('preview');return;}
