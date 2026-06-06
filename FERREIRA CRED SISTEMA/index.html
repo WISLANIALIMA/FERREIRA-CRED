@@ -686,7 +686,7 @@ async function renderOps(){
   const ate=document.getElementById('fop-ate').value||'';
   const lj=document.getElementById('fop-lj').value||'';
   const pr=document.getElementById('fop-pr').value||'';
-  let params='order=data.desc&limit=500';
+  let params='order=data.desc&limit=2000';
   if(de)params+=`&data=gte.${de}`;
   if(ate)params+=`&data=lte.${ate}`;
   if(lj)params+=`&loja=eq.${lj}`;
@@ -725,7 +725,7 @@ async function renderOps(){
 async function renderProd(){
   const de=document.getElementById('fpr-de').value||'';
   const ate=document.getElementById('fpr-ate').value||'';
-  let params='is_loja_propria=eq.false&order=data.desc&limit=2000';
+  let params='is_loja_propria=eq.false&order=data.desc&limit=50000';
   if(de)params+=`&data=gte.${de}`;
   if(ate)params+=`&data=lte.${ate}`;
   const ops=await sbGet('operacoes',params);
@@ -769,7 +769,7 @@ async function renderProd(){
 async function renderPag(){
   const de=document.getElementById('fpg-de').value||'';
   const ate=document.getElementById('fpg-ate').value||'';
-  let params='is_loja_propria=eq.false&order=produtor.asc&limit=2000';
+  let params='is_loja_propria=eq.false&order=produtor.asc&limit=50000';
   if(de)params+=`&data=gte.${de}`;
   if(ate)params+=`&data=lte.${ate}`;
   const ops=await sbGet('operacoes',params);
@@ -874,7 +874,7 @@ async function renderLucSem(){
 
 async function renderLucMes(){
   const ano=document.getElementById('flm-ano').value||'2026';
-  const ops=await sbGet('operacoes',`data=like.${ano}*&select=data,vpassado,ll`);
+  const ops=await sbGet('operacoes',`data=like.${ano}*&select=data,vpassado,ll&limit=50000`);
   const byMes={};
   ops.forEach(o=>{const m=o.data.substring(0,7);if(!byMes[m])byMes[m]={vp:0,ll:0,n:0};byMes[m].vp+=Number(o.vpassado);byMes[m].ll+=Number(o.ll);byMes[m].n++;});
   const meses=Object.keys(byMes).sort();
@@ -912,7 +912,7 @@ async function renderLucLoj(){
 }
 
 async function renderLucAno(){
-  const ops=await sbGet('operacoes','select=data,vpassado,ll&limit=20000');
+  const ops=await sbGet('operacoes','select=data,vpassado,ll&limit=50000');
   const byAno={};
   ops.forEach(o=>{const a=o.data.substring(0,4);if(!byAno[a])byAno[a]={vp:0,ll:0,n:0};byAno[a].vp+=Number(o.vpassado);byAno[a].ll+=Number(o.ll);byAno[a].n++;});
   const anos=Object.keys(byAno).sort();
