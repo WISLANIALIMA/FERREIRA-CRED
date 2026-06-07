@@ -1193,35 +1193,38 @@ function exportarPlanilhaProdutor(produtor, de, ate){
   if(!ops||!ops.length){alert('Nenhuma operação encontrada. Aplique o filtro de datas primeiro.');return;}
   // Usar SheetJS para gerar Excel
   const wb=XLSX.utils.book_new();
-  const header=[['FERREIRA CRED - COMISSÃO DE PRODUTOR'],
+  const fmtBR=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtPct=v=>Number(v||0).toFixed(2).replace('.',',')+' %';
+  const header=[
+    ['FERREIRA CRED - RELATÓRIO DE COMISSÃO'],
     [`Produtor: ${produtor}`],
-    [`Período: ${de||'—'} a ${ate||'—'}`],
+    [`Período: ${de?new Date(de+'T00:00:00').toLocaleDateString('pt-BR'):'—'} a ${ate?new Date(ate+'T00:00:00').toLocaleDateString('pt-BR'):'—'}`],
     [`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`],
     [],
     ['Data','Banco','Bandeira','Parcelas','Vl. Liberado','% Comissão','Comissão']
   ];
-  const rows=ops.map(o=>[
-    o.data,
+  const dataRows=ops.map(o=>[
+    o.data?new Date(o.data+'T00:00:00').toLocaleDateString('pt-BR'):o.data,
     o.banco||'—',
     o.bandeira||'—',
     o.parcelas==='D'?'Débito':o.parcelas+'x',
-    Number(o.vliberado),
-    Number(o.com_prod||0),
-    Number(o.com||0)
+    fmtBR(o.vliberado),
+    fmtPct(o.com_prod||0),
+    fmtBR(o.com||0)
   ]);
   const totalCom=ops.reduce((s,o)=>s+Number(o.com||0),0);
   const totalVL=ops.reduce((s,o)=>s+Number(o.vliberado||0),0);
   const footer=[
     [],
-    ['','','','Total liberado:',totalVL,'',''],
-    ['','','','TOTAL COMISSÃO:','','',totalCom]
+    ['','','','Total liberado:',fmtBR(totalVL),'',''],
+    ['','','','TOTAL COMISSÃO:','','',fmtBR(totalCom)]
   ];
-  const wsData=[...header,...rows,...footer];
+  const wsData=[...header,...dataRows,...footer];
   const ws=XLSX.utils.aoa_to_sheet(wsData);
-  // Largura das colunas
-  ws['!cols']=[{wch:12},{wch:15},{wch:14},{wch:10},{wch:14},{wch:12},{wch:14}];
+  ws['!cols']=[{wch:14},{wch:16},{wch:16},{wch:10},{wch:16},{wch:14},{wch:16}];
+  // Estilo negrito no cabeçalho e totais
   XLSX.utils.book_append_sheet(wb,ws,'Comissão');
-  XLSX.writeFile(wb,`comissao_${produtor.replace(/\s/g,'_')}_${de||'periodo'}.xlsx`);
+  XLSX.writeFile(wb,`comissao_${produtor.replace(/\s+/g,'_')}_${de||'periodo'}.xlsx`);
 }
 
 async function calcGer(){
