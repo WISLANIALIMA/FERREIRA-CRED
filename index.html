@@ -1069,8 +1069,10 @@ async function renderPag(){
   const withCom=ops.filter(o=>Number(o.com)>0);
   if(!withCom.length){el.innerHTML='<div class="empty">Nenhum pagamento no período.</div>';return;}
   const prods=[...new Set(withCom.map(o=>o.produtor))];
+  window._opsPorProdutor={};
   const rows=prods.map(p=>{
     const po=withCom.filter(o=>o.produtor===p);
+    window._opsPorProdutor[p]=po;
     return{p,po,tVL:po.reduce((s,o)=>s+Number(o.vliberado),0),tCom:po.reduce((s,o)=>s+Number(o.com),0),n:po.length,isG:GERENTE.includes(p.toLowerCase())};
   });
   const total=rows.reduce((s,r)=>s+r.tCom,0);
@@ -1083,7 +1085,7 @@ async function renderPag(){
         <td>${r.n}</td><td>${fmt(r.tVL)}</td>
         <td style="font-weight:600;color:var(--amber)">${fmt(r.tCom)}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn" style="padding:4px 10px;font-size:12px" onclick="exportarPlanilhaProdutor('${r.p}',${JSON.stringify(r.po).replace(/'/g,"\'")},'${de}','${ate}')">📊 Excel</button>
+          <button class="btn" style="padding:4px 10px;font-size:12px" onclick="exportarPlanilhaProdutor('${r.p}','${de}','${ate}')">📊 Excel</button>
           <button class="btn btn-primary" style="padding:4px 10px;font-size:12px" onclick="abrirBaixa('${r.p}',${r.tCom.toFixed(2)},'${de}','${ate}')">✓ Dar baixa</button>
         </td>
       </tr>`).join('')}
@@ -1186,7 +1188,9 @@ async function renderBaixas(){
     </tbody></table></div></div>`;
 }
 
-function exportarPlanilhaProdutor(produtor, ops, de, ate){
+function exportarPlanilhaProdutor(produtor, de, ate){
+  const ops=window._opsPorProdutor?window._opsPorProdutor[produtor]:[];
+  if(!ops||!ops.length){alert('Nenhuma operação encontrada. Aplique o filtro de datas primeiro.');return;}
   // Usar SheetJS para gerar Excel
   const wb=XLSX.utils.book_new();
   const header=[['FERREIRA CRED - COMISSÃO DE PRODUTOR'],
