@@ -680,7 +680,8 @@ async function buscarCliente(){
 }
 
 function exportarPlanilhaGerente(){
-  if(!window._gd||!window._gdOps)return;
+  if(!window._gd||!window._gdOps){alert('Clique em Calcular primeiro para carregar os dados.');return;}
+  try{
   const fmtBR=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const ops=window._gdOps;
   const de=document.getElementById('fgr-de').value||'';
@@ -726,6 +727,7 @@ function exportarPlanilhaGerente(){
   ws['!cols']=[{wch:20},{wch:12},{wch:22}];
   XLSX.utils.book_append_sheet(wb,ws,'Gerente');
   XLSX.writeFile(wb,`gerente_${de||'periodo'}.xlsx`);
+  }catch(e){alert('Erro ao gerar Excel: '+e.message);}
 }
 
 async function init(){
