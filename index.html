@@ -1295,6 +1295,7 @@ async function calcGer(){
   const tCom=ops.reduce((s,o)=>s+Number(o.com),0);
   const tLL=ops.reduce((s,o)=>s+Number(o.ll),0);
   window._gd={tVP,tCom,tLL};
+  window._gdOps=ops;
   el.innerHTML=`<div class="metric-grid">
     <div class="metric"><div class="metric-lbl">Produção bruta</div><div class="metric-val blue">${fmt(tVP)}</div></div>
     <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmt(tCom)}</div></div>
