@@ -396,6 +396,9 @@ tr:hover td{background:var(--bg3)}
               <input type="range" min="0.1" max="10" step="0.1" value="1" id="ger-sl" oninput="updateGer(this.value)" style="margin-top:6px">
             </div>
             <div id="ger-calc" style="margin-top:12px"></div>
+          <div id="ger-excel-wrap" style="display:none;margin-top:12px">
+            <button class="btn" onclick="exportarPlanilhaGerente()">📊 Exportar Excel do gerente</button>
+          </div>
           </div>
         </div>
       </div>
@@ -674,6 +677,55 @@ async function buscarCliente(){
       </table></div>
     </div>`;
   }).join('');
+}
+
+function exportarPlanilhaGerente(){
+  if(!window._gd||!window._gdOps)return;
+  const fmtBR=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const ops=window._gdOps;
+  const de=document.getElementById('fgr-de').value||'';
+  const ate=document.getElementById('fgr-ate').value||'';
+  const comGer=window._gerComissao||0;
+
+  // Agrupar por produtor
+  const porProd={};
+  ops.forEach(o=>{
+    const p=o.produtor;
+    if(!porProd[p])porProd[p]={vp:0,n:0};
+    porProd[p].vp+=Number(o.vpassado||0);
+    porProd[p].n++;
+  });
+
+  const wb=XLSX.utils.book_new();
+  const header=[
+    ['FERREIRA CRED - RELATÓRIO DO GERENTE'],
+    [`Período: ${de?new Date(de+'T00:00:00').toLocaleDateString('pt-BR'):'—'} a ${ate?new Date(ate+'T00:00:00').toLocaleDateString('pt-BR'):'—'}`],
+    [`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`],
+    [],
+    ['Produtor','Operações','Produção total (Vl. passado)']
+  ];
+
+  const rows=Object.entries(porProd).map(([p,d])=>[
+    p,
+    d.n,
+    fmtBR(d.vp)
+  ]);
+
+  const totalVP=Object.values(porProd).reduce((s,d)=>s+d.vp,0);
+  const totalOps=Object.values(porProd).reduce((s,d)=>s+d.n,0);
+
+  const footer=[
+    [],
+    ['TOTAL',totalOps,fmtBR(totalVP)],
+    [],
+    ['Valor a pagar ao gerente:','',fmtBR(comGer)]
+  ];
+
+  const wsData=[...header,...rows,...footer];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:20},{wch:12},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws,'Gerente');
+  XLSX.writeFile(wb,`gerente_${de||'periodo'}.xlsx`);
 }
 
 async function init(){
@@ -1253,12 +1305,15 @@ function updateGer(pct){
   document.getElementById('ger-pct').textContent=pct.toFixed(1).replace('.',',');
   if(!window._gd)return;
   const d=window._gd,cg=d.tVP*(pct/100),lf=d.tLL-cg;
+  window._gerPct=pct;
+  window._gerComissao=cg;
   document.getElementById('ger-calc').innerHTML=`<div class="preview">
     <div class="prow"><span>Lucro líquido antes do gerente</span><span>${fmt(d.tLL)}</span></div>
     <div class="prow"><span>Comissão gerente (${pct.toFixed(1).replace('.',',')}%)</span><span style="color:var(--amber)">- ${fmt(cg)}</span></div>
     <div class="prow total"><span>Lucro final</span><span style="color:${lf>=0?'var(--green)':'var(--red)'}">${fmt(lf)}</span></div>
     ${lf<0?'<div style="font-size:12px;color:var(--red);margin-top:8px">⚠️ Com essa % você opera no prejuízo.</div>':''}
   </div>`;
+  document.getElementById('ger-excel-wrap').style.display='block';
 }
 
 async function renderLucDia(){
