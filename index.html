@@ -202,7 +202,7 @@ tr:hover td{background:var(--bg3)}
           <div class="fg"><label>Empresa</label>
             <select id="fs-empresa">
               <option value="WN">WN</option>
-              <option value="Valle">Valle</option>
+              <option value="Vale">Vale</option>
             </select>
           </div>
           <div class="fg"><label>Bandeira</label>
@@ -252,7 +252,7 @@ tr:hover td{background:var(--bg3)}
           <div class="fg"><label>Empresa</label>
             <select id="f-empresa" onchange="autoFill()">
               <option value="WN">WN</option>
-              <option value="Valle">Valle</option>
+              <option value="Vale">Vale</option>
             </select>
           </div>
           <div class="fg"><label>Bandeira</label>
@@ -349,9 +349,12 @@ tr:hover td{background:var(--bg3)}
     <!-- PAGAMENTOS -->
     <div class="section" id="sec-pag">
       <div class="tabs">
-        <button class="tab active" onclick="showTab(this,'tp-prod')">Produtores</button>
+        <button class="tab active" onclick="showTab(this,'tp-prod')">Comissões</button>
+        <button class="tab" onclick="showTab(this,'tp-baixas')">Pagamentos realizados</button>
         <button class="tab" onclick="showTab(this,'tp-ger')">Gerente</button>
       </div>
+
+      <!-- COMISSÕES -->
       <div class="tabcontent active" id="tp-prod">
         <div class="filter-bar">
           <div class="fg"><label>De</label><input type="date" id="fpg-de" onchange="renderPag()"></div>
@@ -359,6 +362,24 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div id="pag-content"></div>
       </div>
+
+      <!-- PAGAMENTOS REALIZADOS -->
+      <div class="tabcontent" id="tp-baixas">
+        <div class="filter-bar">
+          <div class="fg"><label>De</label><input type="date" id="fbx-de" onchange="renderBaixas()"></div>
+          <div class="fg"><label>Até</label><input type="date" id="fbx-ate" onchange="renderBaixas()"></div>
+          <div class="fg"><label>Status</label>
+            <select id="fbx-status" onchange="renderBaixas()">
+              <option value="">Todos</option>
+              <option value="pendente">Pendentes</option>
+              <option value="pago">Pagos</option>
+            </select>
+          </div>
+        </div>
+        <div id="baixas-content"></div>
+      </div>
+
+      <!-- GERENTE -->
       <div class="tabcontent" id="tp-ger">
         <div class="card">
           <div class="card-title">Comissão do gerente</div>
@@ -517,7 +538,7 @@ function hide(id){document.getElementById(id).classList.add('hidden');}
 
 function getFaixa(p){const n=parseInt(p);if(isNaN(n))return null;if(n<=6)return'f1';if(n<=12)return'f2';if(n<=18)return'f3';return null;}
 function getTaxaEmp(band,parc,empresa){
-  if(empresa==='Valle'){return(band==='master'?TAXA_VALLE_M:TAXA_VALLE_H)[parc]||0;}
+  if(empresa==='Vale'){return(band==='master'?TAXA_VALLE_M:TAXA_VALLE_H)[parc]||0;}
   return(band==='master'?TAXA_M:TAXA_H)[parc]||0;
 }
 function detectTab(band,parc,papl){
@@ -644,7 +665,7 @@ async function buscarCliente(){
           <td>${o.data}</td>
           <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
           <td>${o.produtor}</td>
-          <td><span class="badge ${o.empresa==='Valle'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
+          <td><span class="badge ${o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
           <td>${o.bandeira||'—'}</td>
           <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
           <td>${fmt(o.vpassado)}</td>
@@ -737,6 +758,7 @@ function showTab(btn,id){
   if(id==='tl-loj')renderLucLoj();
   if(id==='tl-ano')renderLucAno();
   if(id==='tp-prod')renderPag();
+  if(id==='tp-baixas')renderBaixas();
 }
 
 function initForm(){
@@ -898,7 +920,7 @@ async function renderHoje(){
     <td>${o.hora||'—'}</td>
     <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
     <td>${o.produtor}${o.manual?'<span class="tag-m">manual</span>':''}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
-    <td><span class="badge ${o.empresa==='Valle'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
+    <td><span class="badge ${o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
     <td>${o.bandeira||'—'}</td>
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
@@ -976,7 +998,7 @@ async function renderOps(){
     <td>${o.data}</td>
     <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
     <td>${o.produtor}${o.manual?'<span class="tag-m">manual</span>':''}</td>
-    <td><span class="badge ${o.empresa==='Valle'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
+    <td><span class="badge ${o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
     <td>${o.bandeira||'—'}</td>
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
@@ -1039,7 +1061,7 @@ async function renderProd(){
 async function renderPag(){
   const de=document.getElementById('fpg-de').value||'';
   const ate=document.getElementById('fpg-ate').value||'';
-  let params='is_loja_propria=eq.false&order=produtor.asc';
+  let params='is_loja_propria=eq.false&order=data.asc';
   if(de)params+=`&data=gte.${de}`;
   if(ate)params+=`&data=lte.${ate}`;
   const ops=await sbGetAll('operacoes',params);
@@ -1049,24 +1071,153 @@ async function renderPag(){
   const prods=[...new Set(withCom.map(o=>o.produtor))];
   const rows=prods.map(p=>{
     const po=withCom.filter(o=>o.produtor===p);
-    return{p,tVL:po.reduce((s,o)=>s+Number(o.vliberado),0),tCom:po.reduce((s,o)=>s+Number(o.com),0),n:po.length,isG:GERENTE.includes(p.toLowerCase())};
+    return{p,po,tVL:po.reduce((s,o)=>s+Number(o.vliberado),0),tCom:po.reduce((s,o)=>s+Number(o.com),0),n:po.length,isG:GERENTE.includes(p.toLowerCase())};
   });
   const total=rows.reduce((s,r)=>s+r.tCom,0);
   el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
-    <thead><tr><th>Produtor</th><th>Tipo</th><th>Operações</th><th>Total liberado</th><th>Valor a pagar</th></tr></thead>
+    <thead><tr><th>Produtor</th><th>Tipo</th><th>Operações</th><th>Total liberado</th><th>Comissão a pagar</th><th>Ações</th></tr></thead>
     <tbody>
       ${rows.map(r=>`<tr>
         <td style="font-weight:600">${r.p}</td>
         <td><span class="badge ${r.isG?'b-pink':'b-blue'}">${r.isG?'via gerente':'próprio'}</span></td>
         <td>${r.n}</td><td>${fmt(r.tVL)}</td>
         <td style="font-weight:600;color:var(--amber)">${fmt(r.tCom)}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn" style="padding:4px 10px;font-size:12px" onclick="exportarPlanilhaProdutor('${r.p}',${JSON.stringify(r.po).replace(/'/g,"\'")},'${de}','${ate}')">📊 Excel</button>
+          <button class="btn btn-primary" style="padding:4px 10px;font-size:12px" onclick="abrirBaixa('${r.p}',${r.tCom.toFixed(2)},'${de}','${ate}')">✓ Dar baixa</button>
+        </td>
       </tr>`).join('')}
       <tr style="border-top:2px solid var(--border)">
         <td colspan="4" style="font-weight:600">Total geral</td>
         <td style="font-weight:700;color:var(--amber)">${fmt(total)}</td>
+        <td></td>
       </tr>
     </tbody>
-  </table></div></div>`;
+  </table></div></div>
+  <!-- Modal baixa -->
+  <div id="modal-baixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+    <div style="background:var(--bg2);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:400px;margin:20px">
+      <div style="font-size:16px;font-weight:600;margin-bottom:16px">Registrar pagamento</div>
+      <div id="modal-info" style="font-size:13px;color:var(--text2);margin-bottom:14px"></div>
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="fg"><label>Data do pagamento</label><input type="date" id="bx-data"></div>
+        <div class="fg"><label>Valor pago (R$)</label><input type="number" id="bx-valor" step="0.01"></div>
+        <div class="fg"><label>Observação</label><input type="text" id="bx-obs" placeholder="Ex: Pix realizado"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary" onclick="confirmarBaixa()">✓ Confirmar pagamento</button>
+        <button class="btn" onclick="fecharBaixa()">Cancelar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+let _baixaAtual={};
+function abrirBaixa(produtor,total,de,ate){
+  _baixaAtual={produtor,total,de,ate};
+  document.getElementById('modal-info').innerHTML=`Produtor: <strong>${produtor}</strong><br>Total a pagar: <strong style="color:var(--amber)">${fmt(total)}</strong>`;
+  document.getElementById('bx-data').value=today();
+  document.getElementById('bx-valor').value=total.toFixed(2);
+  document.getElementById('bx-obs').value='';
+  const m=document.getElementById('modal-baixa');
+  m.style.display='flex';
+}
+function fecharBaixa(){document.getElementById('modal-baixa').style.display='none';}
+
+async function confirmarBaixa(){
+  const data=document.getElementById('bx-data').value||today();
+  const valor=parseFloat(document.getElementById('bx-valor').value)||0;
+  const obs=document.getElementById('bx-obs').value;
+  if(!valor){alert('Digite o valor pago.');return;}
+  const {produtor,total,de,ate}=_baixaAtual;
+  const status=valor>=total?'pago':'parcial';
+  const pagamento={
+    id:Date.now(),
+    produtor,
+    data_pagamento:data,
+    valor_devido:total,
+    valor_pago:valor,
+    periodo_de:de,
+    periodo_ate:ate,
+    observacao:obs,
+    status,
+    criado_por:CU.nome
+  };
+  const resp=await sbPost('pagamentos',[pagamento],'return=minimal');
+  if(resp.ok||resp.status===201){
+    fecharBaixa();
+    alert(`Pagamento de ${fmt(valor)} para ${produtor} registrado com sucesso!`);
+    renderBaixas();
+  } else {
+    const err=await resp.text();
+    alert('Erro: '+err);
+  }
+}
+
+async function renderBaixas(){
+  const de=document.getElementById('fbx-de').value||'';
+  const ate=document.getElementById('fbx-ate').value||'';
+  const status=document.getElementById('fbx-status').value||'';
+  let params='order=data_pagamento.desc&limit=500';
+  if(de)params+=`&data_pagamento=gte.${de}`;
+  if(ate)params+=`&data_pagamento=lte.${ate}`;
+  if(status)params+=`&status=eq.${status}`;
+  const pags=await sbGet('pagamentos',params);
+  const el=document.getElementById('baixas-content');
+  if(!Array.isArray(pags)||!pags.length){el.innerHTML='<div class="empty">Nenhum pagamento registrado.</div>';return;}
+  const totalPago=pags.reduce((s,p)=>s+Number(p.valor_pago),0);
+  el.innerHTML=`
+    <div class="metric-grid" style="margin-bottom:14px">
+      <div class="metric"><div class="metric-lbl">Total pago</div><div class="metric-val green">${fmt(totalPago)}</div></div>
+      <div class="metric"><div class="metric-lbl">Pagamentos</div><div class="metric-val">${pags.length}</div></div>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Data pagamento</th><th>Produtor</th><th>Período</th><th>Valor devido</th><th>Valor pago</th><th>Status</th><th>Obs.</th><th>Por</th></tr></thead>
+    <tbody>${pags.map(p=>`<tr>
+      <td>${p.data_pagamento}</td>
+      <td style="font-weight:600">${p.produtor}</td>
+      <td style="font-size:12px;color:var(--text2)">${p.periodo_de||'—'} a ${p.periodo_ate||'—'}</td>
+      <td>${fmt(p.valor_devido)}</td>
+      <td style="font-weight:600;color:var(--green)">${fmt(p.valor_pago)}</td>
+      <td><span class="badge ${p.status==='pago'?'b-green':p.status==='parcial'?'b-amber':'b-red'}">${p.status==='pago'?'Pago':p.status==='parcial'?'Parcial':'Pendente'}</span></td>
+      <td style="font-size:12px">${p.observacao||'—'}</td>
+      <td style="font-size:12px">${p.criado_por||'—'}</td>
+    </tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+
+function exportarPlanilhaProdutor(produtor, ops, de, ate){
+  // Usar SheetJS para gerar Excel
+  const wb=XLSX.utils.book_new();
+  const header=[['FERREIRA CRED - COMISSÃO DE PRODUTOR'],
+    [`Produtor: ${produtor}`],
+    [`Período: ${de||'—'} a ${ate||'—'}`],
+    [`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`],
+    [],
+    ['Data','Banco','Bandeira','Parcelas','Vl. Liberado','% Comissão','Comissão']
+  ];
+  const rows=ops.map(o=>[
+    o.data,
+    o.banco||'—',
+    o.bandeira||'—',
+    o.parcelas==='D'?'Débito':o.parcelas+'x',
+    Number(o.vliberado),
+    Number(o.com_prod||0),
+    Number(o.com||0)
+  ]);
+  const totalCom=ops.reduce((s,o)=>s+Number(o.com||0),0);
+  const totalVL=ops.reduce((s,o)=>s+Number(o.vliberado||0),0);
+  const footer=[
+    [],
+    ['','','','Total liberado:',totalVL,'',''],
+    ['','','','TOTAL COMISSÃO:','','',totalCom]
+  ];
+  const wsData=[...header,...rows,...footer];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  // Largura das colunas
+  ws['!cols']=[{wch:12},{wch:15},{wch:14},{wch:10},{wch:14},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Comissão');
+  XLSX.writeFile(wb,`comissao_${produtor.replace(/\s/g,'_')}_${de||'periodo'}.xlsx`);
 }
 
 async function calcGer(){
