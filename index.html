@@ -326,6 +326,13 @@ tr:hover td{background:var(--bg3)}
           <div class="fg"><label>Até</label><input type="date" id="fop-ate" onchange="renderOps()"></div>
           <div class="fg"><label>Loja</label><select id="fop-lj" onchange="renderOps()"><option value="">Todas</option><option>Caruaru</option><option>Altinho</option></select></div>
           <div class="fg"><label>Produtor</label><select id="fop-pr" onchange="renderOps()"><option value="">Todos</option></select></div>
+          <div class="fg"><label>Empresa</label>
+            <select id="fop-emp" onchange="renderOps()">
+              <option value="">Todas</option>
+              <option value="WN">WN</option>
+              <option value="Vale">Vale</option>
+            </select>
+          </div>
           <button class="btn" onclick="exportCSV()" style="align-self:flex-end">↓ CSV</button>
         </div>
         <div id="ops-met" class="metric-grid"></div>
@@ -998,6 +1005,48 @@ function showTab(btn,id){
   if(id==='tp-baixas')renderBaixas();
 }
 
+async function excluirPagamento(id){
+  if(!confirm('Excluir este pagamento?'))return;
+  await sbDelete('pagamentos',`id=eq.${id}`);
+  alert('Pagamento excluído!');
+  renderBaixas();
+  renderPag();
+}
+
+async function renderBaixas(){
+  const de=document.getElementById('fbx-de')?.value||'';
+  const ate=document.getElementById('fbx-ate')?.value||'';
+  const status=document.getElementById('fbx-status')?.value||'';
+  let params='order=data_pagamento.desc&limit=500';
+  if(de)params+=`&data_pagamento=gte.${de}`;
+  if(ate)params+=`&data_pagamento=lte.${ate}`;
+  if(status)params+=`&status=eq.${status}`;
+  const pags=await sbGet('pagamentos',params);
+  const el=document.getElementById('baixas-content');
+  if(!el)return;
+  if(!Array.isArray(pags)||!pags.length){el.innerHTML='<div class="empty">Nenhum pagamento registrado.</div>';return;}
+  const totalPago=pags.reduce((s,p)=>s+Number(p.valor_pago),0);
+  el.innerHTML=`
+    <div class="metric-grid" style="margin-bottom:14px">
+      <div class="metric"><div class="metric-lbl">Total pago</div><div class="metric-val green">${fmt(totalPago)}</div></div>
+      <div class="metric"><div class="metric-lbl">Registros</div><div class="metric-val">${pags.length}</div></div>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Data</th><th>Produtor</th><th>Período</th><th>Valor devido</th><th>Valor pago</th><th>Status</th><th>Obs.</th><th>Por</th><th></th></tr></thead>
+    <tbody>${pags.map(p=>`<tr>
+      <td>${p.data_pagamento}</td>
+      <td style="font-weight:600">${p.produtor}</td>
+      <td style="font-size:12px;color:var(--text2)">${p.periodo_de||'—'} a ${p.periodo_ate||'—'}</td>
+      <td>${fmt(p.valor_devido)}</td>
+      <td style="font-weight:600;color:var(--green)">${fmt(p.valor_pago)}</td>
+      <td><span class="badge ${p.status==='pago'?'b-green':p.status==='parcial'?'b-amber':'b-red'}">${p.status==='pago'?'Pago':p.status==='parcial'?'Parcial':'Pendente'}</span></td>
+      <td style="font-size:12px">${p.observacao||'—'}</td>
+      <td style="font-size:12px">${p.criado_por||'—'}</td>
+      <td><button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="excluirPagamento(${p.id})">✕ Excluir</button></td>
+    </tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+
 function initForm(){
   document.getElementById('f-data').value=today();
   document.getElementById('prod-wrap').style.display='none';
@@ -1214,11 +1263,13 @@ async function renderOps(){
   const ate=document.getElementById('fop-ate').value||'';
   const lj=document.getElementById('fop-lj').value||'';
   const pr=document.getElementById('fop-pr').value||'';
+  const emp=document.getElementById('fop-emp')?.value||'';
   let params='order=data.desc&limit=2000';
   if(de)params+=`&data=gte.${de}`;
   if(ate)params+=`&data=lte.${ate}`;
   if(lj)params+=`&loja=eq.${lj}`;
   if(pr)params+=`&produtor=eq.${pr}`;
+  if(emp)params+=`&empresa=eq.${emp}`;
   const ops=await sbGet('operacoes',params);
   const tb=document.getElementById('ops-tb');
   if(!Array.isArray(ops)||!ops.length){tb.innerHTML='<tr><td colspan="13" class="empty">Nenhuma operação.</td></tr>';document.getElementById('ops-met').innerHTML='';return;}
@@ -1560,6 +1611,8 @@ async function exportCSV(){
   if(ate)params+=`&data=lte.${ate}`;
   if(lj)params+=`&loja=eq.${lj}`;
   if(pr)params+=`&produtor=eq.${pr}`;
+  const empF=document.getElementById('fop-emp')?.value||'';
+  if(empF)params+=`&empresa=eq.${empF}`;
   const ops=await sbGet('operacoes',params);
   if(!ops||!ops.length){alert('Nenhuma operação para exportar.');return;}
   const h='Data,Loja,Produtor,Empresa,Bandeira,Parcelas,Banco,Vl.Passado,Vl.Liberado,%Aplicada,Taxa%,Lucro Bruto,Comissão,Lucro Líquido';
