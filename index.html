@@ -1044,6 +1044,58 @@ function showTab(btn,id){
   if(id==='tp-baixas')renderBaixas();
 }
 
+let _baixaAtual={};
+
+function abrirBaixa(produtor, total, de, ate){
+  _baixaAtual={produtor,total,de,ate};
+  const el=document.getElementById('modal-info');
+  if(el)el.innerHTML=`Produtor: <strong>${produtor}</strong><br>Saldo pendente: <strong style="color:var(--amber)">${fmt(total)}</strong>`;
+  const bxData=document.getElementById('bx-data');
+  const bxValor=document.getElementById('bx-valor');
+  const bxObs=document.getElementById('bx-obs');
+  if(bxData)bxData.value=today();
+  if(bxValor)bxValor.value=total.toFixed(2);
+  if(bxObs)bxObs.value='';
+  const m=document.getElementById('modal-baixa');
+  if(m)m.style.display='flex';
+}
+
+function fecharBaixa(){
+  const m=document.getElementById('modal-baixa');
+  if(m)m.style.display='none';
+}
+
+async function confirmarBaixa(){
+  const data=document.getElementById('bx-data').value||today();
+  const valor=parseFloat(document.getElementById('bx-valor').value)||0;
+  const obs=document.getElementById('bx-obs').value||'';
+  if(!valor){alert('Digite o valor pago.');return;}
+  const{produtor,total,de,ate}=_baixaAtual;
+  const status=valor>=total?'pago':'parcial';
+  const pagamento={
+    id:Date.now(),
+    produtor,
+    data_pagamento:data,
+    valor_devido:total,
+    valor_pago:valor,
+    periodo_de:de||'',
+    periodo_ate:ate||'',
+    observacao:obs,
+    status,
+    criado_por:CU?CU.nome:''
+  };
+  const resp=await sbPost('pagamentos',[pagamento],'return=minimal');
+  if(resp.ok||resp.status===201||resp.status===204){
+    fecharBaixa();
+    alert(`✅ Pagamento de ${fmt(valor)} para ${produtor} registrado!`);
+    renderPag();
+    renderBaixas();
+  } else {
+    const err=await resp.text();
+    alert('Erro ao salvar: '+err);
+  }
+}
+
 async function excluirPagamento(id){
   if(!confirm('Excluir este pagamento?'))return;
   await sbDelete('pagamentos',`id=eq.${id}`);
