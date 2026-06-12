@@ -211,7 +211,7 @@ tr:hover td{background:var(--bg3)}
               <option value="hiper">Hiper / Elo / Amex</option>
             </select>
           </div>
-          <div class="fg"><label>Banco</label><input type="text" id="fs-banco" placeholder="Ex: Nubank"></div>
+          <div class="fg"><label>Banco emissor</label><input type="text" id="fs-banco" placeholder="Ex: Nubank"></div>
           <div class="fg"><label>Nome do cliente</label><input type="text" id="fs-cliente" placeholder="Nome completo"></div>
           <div class="fg"><label>Parcelas</label>
             <select id="fs-parc">
@@ -261,7 +261,7 @@ tr:hover td{background:var(--bg3)}
               <option value="hiper">Hiper / Elo / Amex</option>
             </select>
           </div>
-          <div class="fg"><label>Banco</label><input type="text" id="f-banco" placeholder="Ex: Nubank"></div>
+          <div class="fg"><label>Banco emissor</label><input type="text" id="f-banco" placeholder="Ex: Nubank"></div>
           <div class="fg"><label>Nome do cliente</label><input type="text" id="f-cliente" placeholder="Nome completo"></div>
           <div class="fg"><label>Parcelas</label>
             <select id="f-parc" onchange="autoFill()">
@@ -729,7 +729,7 @@ function exportarPlanilhaProdutor(produtor, de, ate){
       [`Período: ${de?new Date(de+'T00:00:00').toLocaleDateString('pt-BR'):'—'} a ${ate?new Date(ate+'T00:00:00').toLocaleDateString('pt-BR'):'—'}`],
       [`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`],
       [],
-      ['Data','Banco','Bandeira','Parcelas','Vl. Liberado','% Comissão','Comissão']
+      ['Data','Banco Emissor','Bandeira','Parcelas','Vl. Liberado','% Comissão','Comissão']
     ];
     const dataRows=ops.map(o=>[
       o.data?new Date(o.data+'T00:00:00').toLocaleDateString('pt-BR'):o.data,
