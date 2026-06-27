@@ -531,6 +531,7 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const HDR={headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'}};
 
 const GERENTE=['jayana','katia','kátia','daniel','erika','well','juliana'];
+const SEM_COMISSAO=['will']; // Produtores próprios que não recebem comissão
 const TAXA_M={'D':2.74,'1':3.74,'2':4.58,'3':5.23,'4':5.87,'5':6.51,'6':7.14,'7':7.96,'8':8.58,'9':9.19,'10':9.80,'11':10.40,'12':11.00,'13':12.39,'14':12.98,'15':13.56,'16':14.14,'17':14.71,'18':15.28};
 const TAXA_H={'D':2.74,'1':4.44,'2':5.62,'3':6.27,'4':6.91,'5':7.55,'6':8.18,'7':9.59,'8':10.21,'9':10.82,'10':11.43,'11':12.03,'12':12.63,'13':13.22,'14':13.81,'15':14.39,'16':14.97,'17':15.54,'18':16.11};
 // VALLE
@@ -1171,14 +1172,16 @@ function autoFill(){
   const parc=document.getElementById('f-parc').value;
   const papl=parseFloat(document.getElementById('f-papl').value)||0;
   const empresa=document.getElementById('f-empresa').value;
-  const isLoja=document.getElementById('f-prod').value==='__loja__';
+  const prodSel=document.getElementById('f-prod').value;
+  const isLoja=prodSel==='__loja__';
+  const isSemCom=SEM_COMISSAO.includes(prodSel.toLowerCase());
   _aTE=getTaxaEmp(band,parc,empresa);_aCom=0;_aTab='';_aSC=false;_aEsp=false;
   const ti=document.getElementById('taxas-info');
   if(_aTE>0){
     ti.classList.remove('hidden');ti.style.display='flex';
     document.getElementById('inf-te').textContent='Taxa: '+fmtP(_aTE);
   } else {ti.classList.add('hidden');}
-  if(!isLoja&&papl>0&&parc!=='D'){
+  if(!isLoja&&!isSemCom&&papl>0&&parc!=='D'){
     const det=detectTab(band,parc,papl);
     if(det){
       _aCom=det.c;_aTab=det.n;_aSC=!!det.sc;_aEsp=det.esp;
@@ -1187,6 +1190,11 @@ function autoFill(){
       document.getElementById('inf-tab').className='badge '+(det.sc?'b-red':det.esp?'b-amber':'b-green');
       document.getElementById('inf-com').className='badge '+(det.sc?'b-red':'b-gray');
     }
+  } else if(isSemCom){
+    document.getElementById('inf-tab').textContent='Sem comissão';
+    document.getElementById('inf-com').textContent='Lucro 100% Ferreira Cred';
+    document.getElementById('inf-tab').className='badge b-green';
+    document.getElementById('inf-com').className='badge b-green';
   } else {document.getElementById('inf-tab').textContent='';document.getElementById('inf-com').textContent='';}
   calcPreview();
 }
@@ -1240,9 +1248,11 @@ async function salvarOp(){
   const vl=parseFloat(document.getElementById('f-vl').value);
   const papl=parseFloat(document.getElementById('f-papl').value)||0;
   const isLoja=prodVal==='__loja__'||lojaSelect!=='Produtor';
+  const isSemComissao=SEM_COMISSAO.includes(prodVal.toLowerCase());
   if(!vp||!vl){showAl('lanc','Preencha valor passado e valor liberado.','danger');return;}
   if(vl>=vp){showAl('lanc','Valor liberado deve ser menor que o passado.','danger');return;}
-  const{te,cp}=getEfetivo();
+  let{te,cp}=getEfetivo();
+  if(isSemComissao)cp=0; // Will e outros sem comissão
   if(!te){showAl('lanc','Selecione bandeira e parcelas para calcular a taxa.','danger');return;}
   const r=calcOp(vp,vl,te,cp);
   const manual=!!(parseFloat(document.getElementById('f-te-m').value)||parseFloat(document.getElementById('f-cp-m').value));
@@ -1761,7 +1771,8 @@ document.getElementById('file-imp').addEventListener('change',async function(e){
         const te=getTaxaEmp(bandCode,parcStr)||11;
         const isLoja=produtor===loja;
         let cp=0,tab='';
-        if(!isLoja&&papl>0){const det=detectTab(bandCode,parcStr,papl);if(det){cp=det.c;tab=det.n;}}
+        const isSemCom2=SEM_COMISSAO.includes(produtor.toLowerCase());
+  if(!isLoja&&!isSemCom2&&papl>0){const det=detectTab(bandCode,parcStr,papl);if(det){cp=det.c;tab=det.n;}}
         const r=calcOp(vp,vl,te,cp);
         ops.push({id:Date.now()+n,data,loja,produtor,is_loja_propria:isLoja,bandeira:bandCode==='master'?'Visa/Master':'Hiper/Elo/Amex',band_code:bandCode,parcelas:parcStr||'12',banco:'',vpassado:vp,vliberado:vl,paplicada:papl,taxa_emp:te,com_prod:cp,tabela:tab,...r,sem_com:false,especial:false,manual:false,hora:'--',fonte:'import'});
         n++;
