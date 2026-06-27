@@ -1463,22 +1463,27 @@ async function renderPag(){
   const withCom=ops.filter(o=>Number(o.com)>0);
   if(!withCom.length){el.innerHTML='<div class="empty">Nenhum pagamento no período.</div>';return;}
 
-  // Buscar TODOS os pagamentos realizados para cruzar corretamente
-  // Buscamos pagamentos onde o periodo_de e periodo_ate se sobrepõem ao filtro atual
+  // Buscar pagamentos realizados no mesmo período do filtro
   const pagamentos=await sbGet('pagamentos','order=data_pagamento.desc&limit=1000');
   const pagPorProd={};
   if(Array.isArray(pagamentos)){
     pagamentos.forEach(p=>{
-      // Só considera pagamentos cujo período referência bate com o filtro atual
-      // Se não tem período definido, considera todos
       const pDe=p.periodo_de||'';
       const pAte=p.periodo_ate||'';
-      let incluir=true;
-      if(de&&ate&&pDe&&pAte){
-        // Verifica se há sobreposição entre o período do pagamento e o filtro
-        incluir=!(pAte<de||pDe>ate);
-      } else if(de&&pDe){
-        incluir=pDe>=de;
+      let incluir=false;
+      if(!de&&!ate){
+        // Sem filtro: conta todos
+        incluir=true;
+      } else if(de&&ate&&pDe&&pAte){
+        // Período exato: só conta se o período do pagamento for igual ao filtro
+        incluir=(pDe===de&&pAte===ate);
+      } else if(de&&ate&&(!pDe||!pAte)){
+        // Pagamento sem período definido: conta se data_pagamento está no filtro
+        incluir=(p.data_pagamento>=de&&p.data_pagamento<=ate);
+      } else if(de&&!ate&&pDe){
+        incluir=pDe===de;
+      } else {
+        incluir=true;
       }
       if(incluir){
         if(!pagPorProd[p.produtor])pagPorProd[p.produtor]=0;
