@@ -1532,10 +1532,10 @@ async function renderPag(){
         <td>${fmt(r.tVL)}</td>
         <td style="color:var(--amber);font-weight:600">${fmt(r.tCom)}</td>
         <td style="color:var(--green);font-weight:600">${fmt(r.jaPago)}</td>
-        <td style="color:${r.pendente>0?'var(--red)':'var(--green)'};font-weight:600">${fmt(r.pendente)}</td>
+        <td style="color:${r.saldoGlobal>0.01?'var(--red)':'var(--green)'};font-weight:600" title="Saldo global: ${fmt(r.saldoGlobal)}">${fmt(Math.max(0,r.saldoGlobal))}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn" style="padding:4px 10px;font-size:12px" onclick="exportarPlanilhaProdutor('${r.p}','${de}','${ate}')">📊 Excel</button>
-          <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;${r.pendente<=0?'opacity:0.5':''}" onclick="abrirBaixa('${r.p}',${r.pendente.toFixed(2)},'${de}','${ate}')">✓ Dar baixa</button>
+          <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;${r.pendente<=0?'opacity:0.5':''}" onclick="abrirBaixa('${r.p}',${Math.max(0,r.saldoGlobal).toFixed(2)},'${de}','${ate}')">✓ Dar baixa</button>
         </td>
       </tr>`).join('')}
       <tr style="border-top:2px solid var(--border);font-weight:600">
