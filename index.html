@@ -1463,14 +1463,41 @@ async function renderPag(){
   const withCom=ops.filter(o=>Number(o.com)>0);
   if(!withCom.length){el.innerHTML='<div class="empty">Nenhum pagamento no período.</div>';return;}
 
-  // Buscar TODOS os pagamentos de cada produtor - simples e direto
-  // O saldo é: comissão do período filtrado - tudo que já foi pago ao produtor
+  // Buscar pagamentos registrados para o período filtrado
+  // Lógica: data_pagamento está dentro do filtro OU periodo_de/ate bate com o filtro
   const pagamentos=await sbGet('pagamentos','order=data_pagamento.asc&limit=5000');
   const pagPorProd={};
   if(Array.isArray(pagamentos)){
     pagamentos.forEach(p=>{
-      if(!pagPorProd[p.produtor])pagPorProd[p.produtor]=0;
-      pagPorProd[p.produtor]+=Number(p.valor_pago||0);
+      const pDe=p.periodo_de||'';
+      const pAte=p.periodo_ate||'';
+      const pDataPag=p.data_pagamento||'';
+      let incluir=false;
+      
+      if(!de&&!ate){
+        // Sem filtro: conta tudo
+        incluir=true;
+      } else {
+        // Com filtro: conta se o período do pagamento está contido dentro do filtro atual
+        // Ex: filtro 27/06-29/06, pagamento registrado com periodo 27/06-29/06 → conta
+        // Ex: filtro 27/06-29/06, pagamento registrado com periodo 01/06-30/06 → NÃO conta
+        if(pDe&&pAte&&de&&ate){
+          // Período do pagamento deve estar DENTRO do filtro (não pode ser maior)
+          incluir=(pDe>=de && pAte<=ate);
+        } else if(pDataPag&&de&&ate){
+          // Se não tem período, usa a data do pagamento
+          incluir=(pDataPag>=de && pDataPag<=ate);
+        } else if(pDe&&de&&!ate){
+          incluir=pDe>=de;
+        } else {
+          incluir=true;
+        }
+      }
+      
+      if(incluir){
+        if(!pagPorProd[p.produtor])pagPorProd[p.produtor]=0;
+        pagPorProd[p.produtor]+=Number(p.valor_pago||0);
+      }
     });
   }
 
