@@ -121,6 +121,11 @@ tr:hover td{background:var(--bg3)}
 #loading{position:fixed;inset:0;background:rgba(255,255,255,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px}
 .spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* OLHINHO */
+.eye-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:2px 6px;color:var(--text2);vertical-align:middle;}
+.eye-btn:hover{color:var(--text)}
+.hidden-val::after{content:'••••••'}
 </style>
 </head>
 <body>
@@ -163,6 +168,7 @@ tr:hover td{background:var(--bg3)}
     </div>
     <div class="topbar-right">
       <span class="topbar-user">Olá, <strong id="hdr-user"></strong></span>
+      <button class="eye-btn" onclick="toggleValues()" title="Mostrar/ocultar valores"><span id="eye-icon">👁️</span></button>
       <label class="btn-sm" id="btn-import-lbl" style="cursor:pointer">
         ↑ Importar
         <input type="file" id="file-imp" accept=".xlsx,.xls,.csv" style="display:none">
@@ -201,7 +207,6 @@ tr:hover td{background:var(--bg3)}
           </div>
           <div class="fg"><label>Empresa</label>
             <select id="fs-empresa">
-              <option value="WN">WN</option>
               <option value="Vale">Vale</option>
               <option value="Stone">Stone</option>
             </select>
@@ -255,7 +260,6 @@ tr:hover td{background:var(--bg3)}
           </div>
           <div class="fg"><label>Empresa</label>
             <select id="f-empresa" onchange="autoFill()">
-              <option value="WN">WN</option>
               <option value="Vale">Vale</option>
               <option value="Stone">Stone</option>
             </select>
@@ -337,7 +341,6 @@ tr:hover td{background:var(--bg3)}
           <div class="fg"><label>Empresa</label>
             <select id="fop-emp" onchange="renderOps()">
               <option value="">Todas</option>
-              <option value="WN">WN</option>
               <option value="Vale">Vale</option>
               <option value="Stone">Stone</option>
             </select>
@@ -568,7 +571,8 @@ let PRODS=[
   {nome:'Daniel',tipo:'gerente'},{nome:'Katia',tipo:'gerente'},{nome:'Jayana',tipo:'gerente'},
   {nome:'Juliana',tipo:'gerente'},{nome:'JE Empréstimos',tipo:'proprio'},{nome:'Erika',tipo:'gerente'},
   {nome:'Vanny',tipo:'gerente'},
-  {nome:'Venda Externa',tipo:'proprio'}
+  {nome:'Venda Externa',tipo:'proprio'},
+  {nome:'Edivane',tipo:'proprio'}
 ];
 let USERS=[];
 let _aTE=0,_aCom=0,_aTab='',_aSC=false,_aEsp=false;
@@ -721,7 +725,7 @@ async function buscarCliente(){
           <td>${o.data}</td>
           <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
           <td>${o.produtor}</td>
-          <td><span class="badge ${o.empresa==='Vale'?'b-pink':o.empresa==='Stone'?'b-amber':'b-blue'}">${o.empresa||'WN'}</span></td>
+          <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
           <td>${o.bandeira||'—'}</td>
           <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
           <td>${fmt(o.vpassado)}</td>
@@ -831,7 +835,7 @@ async function renderLucEmp(){
   const ops=await sbGet('operacoes',params);
   const el=document.getElementById('le-content');
   if(!ops||!ops.length){el.innerHTML='<div class="empty">Nenhum dado.</div>';return;}
-  const empresas=['WN','Vale','Stone'];
+  const empresas=['Vale','Stone'];
   el.innerHTML=empresas.map(e=>{
     const eo=ops.filter(o=>(o.empresa||'WN')===e);
     if(!eo.length)return'';
@@ -845,7 +849,7 @@ async function renderLucEmp(){
       <div class="metric-grid">
         <div class="metric"><div class="metric-lbl">Produção</div><div class="metric-val blue">${fmt(tVP)}</div></div>
         <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmt(tCom)}</div></div>
-        <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmt(tLL)}</div></div>
+        <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmtV(tLL)}</div></div>
         <div class="metric"><div class="metric-lbl">Operações</div><div class="metric-val">${eo.length}</div></div>
       </div>
     </div>`;
@@ -882,12 +886,12 @@ async function renderLucProd(){
         <td>${po.length}</td>
         <td>${fmt(tVP)}</td>
         <td>${fmt(tCom)}</td>
-        <td style="color:var(--green);font-weight:600">${fmt(tLL)}</td>
+        <td style="color:var(--green);font-weight:600">${fmtV(tLL)}</td>
       </tr>`;
     }).join('')}
     <tr style="border-top:2px solid var(--border);font-weight:600">
       <td colspan="6">Total geral</td>
-      <td style="color:var(--green);font-weight:700">${fmt(totalGeral)}</td>
+      <td style="color:var(--green);font-weight:700">${fmtV(totalGeral)}</td>
     </tr>
     </tbody>
   </table></div></div>`;
@@ -902,7 +906,7 @@ async function renderLucEmp(){
   const ops=await sbGet('operacoes',params);
   const el=document.getElementById('le-content');
   if(!ops||!ops.length){el.innerHTML='<div class="empty">Nenhum dado.</div>';return;}
-  const empresas=['WN','Vale','Stone'];
+  const empresas=['Vale','Stone'];
   const tVPGeral=ops.reduce((s,o)=>s+Number(o.vpassado),0);
   const tLLGeral=ops.reduce((s,o)=>s+Number(o.ll),0);
   el.innerHTML=`<div class="metric-grid" style="margin-bottom:14px">
@@ -924,7 +928,7 @@ async function renderLucEmp(){
       <div class="metric-grid">
         <div class="metric"><div class="metric-lbl">Produção</div><div class="metric-val blue">${fmt(tVP)}</div></div>
         <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmt(tCom)}</div></div>
-        <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmt(tLL)}</div></div>
+        <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmtV(tLL)}</div></div>
         <div class="metric"><div class="metric-lbl">Operações</div><div class="metric-val">${eo.length}</div></div>
       </div>
     </div>`;
@@ -960,15 +964,30 @@ async function renderLucProd(){
         <td>${po.length}</td>
         <td>${fmt(tVP)}</td>
         <td>${fmt(tCom)}</td>
-        <td style="color:var(--green);font-weight:600">${fmt(tLL)}</td>
+        <td style="color:var(--green);font-weight:600">${fmtV(tLL)}</td>
       </tr>`;
     }).join('')}
     <tr style="border-top:2px solid var(--border);font-weight:600">
       <td colspan="6">Total geral</td>
-      <td style="color:var(--green);font-weight:700">${fmt(totalGeral)}</td>
+      <td style="color:var(--green);font-weight:700">${fmtV(totalGeral)}</td>
     </tr>
     </tbody>
   </table></div></div>`;
+}
+
+
+// OLHINHO - ocultar/mostrar valores
+let _valuesHidden = false;
+function toggleValues(){
+  _valuesHidden = !_valuesHidden;
+  document.querySelectorAll('[data-val]').forEach(el=>{
+    el.textContent = _valuesHidden ? '••••' : el.getAttribute('data-val');
+  });
+  document.getElementById('eye-icon').textContent = _valuesHidden ? '🙈' : '👁️';
+}
+function fmtV(v){
+  const s='R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return `<span data-val="${s}" ${_valuesHidden?'':''}>${_valuesHidden?'••••':s}</span>`;
 }
 
 async function init(){
@@ -1320,15 +1339,15 @@ async function renderHoje(){
   const tLL=ops.reduce((s,o)=>s+Number(o.ll),0);
   const tCom=ops.reduce((s,o)=>s+Number(o.com),0);
   met.innerHTML=`
-    <div class="metric"><div class="metric-lbl">Produção hoje</div><div class="metric-val blue">${fmt(tVP)}</div></div>
-    <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmt(tLL)}</div></div>
-    <div class="metric"><div class="metric-lbl">Comissões</div><div class="metric-val amber">${fmt(tCom)}</div></div>
+    <div class="metric"><div class="metric-lbl">Produção hoje</div><div class="metric-val blue">${fmtV(tVP)}</div></div>
+    <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmtV(tLL)}</div></div>
+    <div class="metric"><div class="metric-lbl">Comissões</div><div class="metric-val amber">${fmtV(tCom)}</div></div>
     <div class="metric"><div class="metric-lbl">Operações</div><div class="metric-val">${ops.length}</div></div>`;
   tb.innerHTML=ops.map(o=>`<tr>
     <td>${o.hora||'—'}</td>
     <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
     <td>${o.produtor}${o.manual?'<span class="tag-m">manual</span>':''}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
-    <td><span class="badge ${o.empresa==='Vale'?'b-pink':o.empresa==='Stone'?'b-amber':'b-blue'}">${o.empresa||'WN'}</span></td>
+    <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
     <td>${o.bandeira||'—'}</td>
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
@@ -1377,7 +1396,7 @@ async function updateHdr(){
   if(!Array.isArray(ops))return;
   const tVP=ops.reduce((s,o)=>s+Number(o.vpassado),0);
   const tLL=ops.reduce((s,o)=>s+Number(o.ll),0);
-  document.getElementById('hdr-mes').textContent=`Mês: prod. ${fmt(tVP)} | lucro ${fmt(tLL)}`;
+  document.getElementById('hdr-mes').innerHTML=`Mês: prod. ${fmtV(tVP)} | lucro ${fmtV(tLL)}`;
 }
 
 async function renderOps(){
@@ -1399,23 +1418,23 @@ async function renderOps(){
   const tLL=ops.reduce((s,o)=>s+Number(o.ll),0);
   const tCom=ops.reduce((s,o)=>s+Number(o.com),0);
   document.getElementById('ops-met').innerHTML=`
-    <div class="metric"><div class="metric-lbl">Produção</div><div class="metric-val blue">${fmt(tVP)}</div></div>
-    <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmt(tLL)}</div></div>
-    <div class="metric"><div class="metric-lbl">Comissões</div><div class="metric-val amber">${fmt(tCom)}</div></div>
+    <div class="metric"><div class="metric-lbl">Produção</div><div class="metric-val blue">${fmtV(tVP)}</div></div>
+    <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmtV(tLL)}</div></div>
+    <div class="metric"><div class="metric-lbl">Comissões</div><div class="metric-val amber">${fmtV(tCom)}</div></div>
     <div class="metric"><div class="metric-lbl">Operações</div><div class="metric-val">${ops.length}</div></div>`;
   document.getElementById('ops-info').textContent=ops.length>=500?'Mostrando até 500 registros. Use filtros para refinar.':'';
   tb.innerHTML=ops.map(o=>`<tr>
     <td>${o.data}</td>
     <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
     <td>${o.produtor}${o.manual?'<span class="tag-m">manual</span>':''}</td>
-    <td><span class="badge ${o.empresa==='Vale'?'b-pink':o.empresa==='Stone'?'b-amber':'b-blue'}">${o.empresa||'WN'}</span></td>
+    <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
     <td>${o.bandeira||'—'}</td>
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
     <td>${o.paplicada?fmtP(o.paplicada):'—'}</td>
     <td>${fmtP(o.taxa_emp||0)}</td>
     <td>${fmt(o.lb)}</td><td>${fmt(o.com)}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
-    <td style="color:var(--green);font-weight:600">${fmt(o.ll)}</td>
+    <td style="color:var(--green);font-weight:600">${fmtV(o.ll)}</td>
     <td><button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="delOp(${o.id})">✕</button></td>
   </tr>`).join('');
   const fp=document.getElementById('fop-pr');
@@ -1529,9 +1548,9 @@ async function renderPag(){
 
   el.innerHTML=`
   <div class="metric-grid" style="margin-bottom:14px">
-    <div class="metric"><div class="metric-lbl">Total comissões</div><div class="metric-val amber">${fmt(totalCom)}</div></div>
-    <div class="metric"><div class="metric-lbl">Já pago</div><div class="metric-val green">${fmt(totalPago)}</div></div>
-    <div class="metric"><div class="metric-lbl">Saldo pendente</div><div class="metric-val red">${fmt(totalPendente)}</div></div>
+    <div class="metric"><div class="metric-lbl">Total comissões</div><div class="metric-val amber">${fmtV(totalCom)}</div></div>
+    <div class="metric"><div class="metric-lbl">Já pago</div><div class="metric-val green">${fmtV(totalPago)}</div></div>
+    <div class="metric"><div class="metric-lbl">Saldo pendente</div><div class="metric-val red">${fmtV(totalPendente)}</div></div>
   </div>
   <div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Produtor</th><th>Tipo</th><th>Ops</th><th>Total liberado</th><th>Comissão total</th><th>Já pago</th><th>Saldo pendente</th><th>Ações</th></tr></thead>
@@ -1543,7 +1562,7 @@ async function renderPag(){
         <td>${fmt(r.tVL)}</td>
         <td style="color:var(--amber);font-weight:600">${fmt(r.tCom)}</td>
         <td style="color:var(--green);font-weight:600">${fmt(r.jaPago)}</td>
-        <td style="color:${r.pendente>0.01?'var(--red)':'var(--green)'};font-weight:600">${fmt(r.pendente)}</td>
+        <td style="color:${r.pendente>0.01?'var(--red)':'var(--green)'};font-weight:600">${fmtV(r.pendente)}</td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn" style="padding:4px 10px;font-size:12px" onclick="exportarPlanilhaProdutor('${r.p}','${de}','${ate}')">📊 Excel</button>
           <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;${r.pendente<=0?'opacity:0.5':''}" onclick="abrirBaixa('${r.p}',${r.pendente.toFixed(2)},'${de}','${ate}')">✓ Dar baixa</button>
@@ -1595,7 +1614,7 @@ async function calcGer(){
   el.innerHTML=`<div class="metric-grid">
     <div class="metric"><div class="metric-lbl">Produção bruta</div><div class="metric-val blue">${fmt(tVP)}</div></div>
     <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmt(tCom)}</div></div>
-    <div class="metric"><div class="metric-lbl">Lucro líquido base</div><div class="metric-val green">${fmt(tLL)}</div></div>
+    <div class="metric"><div class="metric-lbl">Lucro líquido base</div><div class="metric-val green">${fmtV(tLL)}</div></div>
   </div>`;
   sw.classList.remove('hidden');updateGer(document.getElementById('ger-sl').value);
 }
@@ -1630,11 +1649,11 @@ async function renderLucDia(){
   const tVP=ops.reduce((s,o)=>s+Number(o.vpassado),0),tLL=ops.reduce((s,o)=>s+Number(o.ll),0);
   el.innerHTML=`<div class="metric-grid" style="margin-bottom:14px">
     <div class="metric"><div class="metric-lbl">Produção período</div><div class="metric-val blue">${fmt(tVP)}</div></div>
-    <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmt(tLL)}</div></div>
+    <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmtV(tLL)}</div></div>
   </div>
   <div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Data</th><th>Operações</th><th>Produção</th><th>Comissões</th><th>Lucro líquido</th></tr></thead>
-    <tbody>${dias.map(d=>`<tr><td>${d}</td><td>${byDay[d].n}</td><td>${fmt(byDay[d].vp)}</td><td>${fmt(byDay[d].com)}</td><td style="color:var(--green);font-weight:600">${fmt(byDay[d].ll)}</td></tr>`).join('')}</tbody>
+    <tbody>${dias.map(d=>`<tr><td>${d}</td><td>${byDay[d].n}</td><td>${fmt(byDay[d].vp)}</td><td>${fmt(byDay[d].com)}</td><td style="color:var(--green);font-weight:600">${fmtV(byDay[d].ll)}</td></tr>`).join('')}</tbody>
   </table></div></div>`;
 }
 
@@ -1650,7 +1669,7 @@ async function renderLucSem(){
   if(!sems.length){el.innerHTML='<div class="empty">Nenhum dado.</div>';return;}
   el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Semana</th><th>Operações</th><th>Produção</th><th>Lucro líquido</th></tr></thead>
-    <tbody>${sems.map((s,i)=>`<tr><td>Semana ${i+1} (${s})</td><td>${bySem[s].n}</td><td>${fmt(bySem[s].vp)}</td><td style="color:var(--green);font-weight:600">${fmt(bySem[s].ll)}</td></tr>`).join('')}</tbody>
+    <tbody>${sems.map((s,i)=>`<tr><td>Semana ${i+1} (${s})</td><td>${bySem[s].n}</td><td>${fmt(bySem[s].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(bySem[s].ll)}</td></tr>`).join('')}</tbody>
   </table></div></div>`;
 }
 
@@ -1665,7 +1684,7 @@ async function renderLucMes(){
   if(!meses.length){el.innerHTML=`<div class="empty">Nenhum dado para ${ano}.</div>`;return;}
   el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Mês</th><th>Operações</th><th>Produção</th><th>Lucro líquido</th></tr></thead>
-    <tbody>${meses.map(m=>{const mn=parseInt(m.split('-')[1])-1;return`<tr><td>${nomes[mn]}</td><td>${byMes[m].n}</td><td>${fmt(byMes[m].vp)}</td><td style="color:var(--green);font-weight:600">${fmt(byMes[m].ll)}</td></tr>`;}).join('')}</tbody>
+    <tbody>${meses.map(m=>{const mn=parseInt(m.split('-')[1])-1;return`<tr><td>${nomes[mn]}</td><td>${byMes[m].n}</td><td>${fmt(byMes[m].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(byMes[m].ll)}</td></tr>`;}).join('')}</tbody>
   </table></div></div>`;
 }
 
@@ -1686,7 +1705,7 @@ async function renderLucLoj(){
       <div class="metric-grid">
         <div class="metric"><div class="metric-lbl">Produção</div><div class="metric-val blue">${fmt(lo.reduce((s,o)=>s+Number(o.vpassado),0))}</div></div>
         <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmt(lo.reduce((s,o)=>s+Number(o.com),0))}</div></div>
-        <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmt(lo.reduce((s,o)=>s+Number(o.ll),0))}</div></div>
+        <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmtV(lo.reduce((s,o)=>s+Number(o.ll),0))}</div></div>
         <div class="metric"><div class="metric-lbl">Operações</div><div class="metric-val">${lo.length}</div></div>
       </div>
     </div>`;
@@ -1701,7 +1720,7 @@ async function renderLucAno(){
   const el=document.getElementById('la-content');
   el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Ano</th><th>Operações</th><th>Produção total</th><th>Lucro líquido</th></tr></thead>
-    <tbody>${anos.map(a=>`<tr><td style="font-weight:600">${a}</td><td>${byAno[a].n}</td><td>${fmt(byAno[a].vp)}</td><td style="color:var(--green);font-weight:600">${fmt(byAno[a].ll)}</td></tr>`).join('')}</tbody>
+    <tbody>${anos.map(a=>`<tr><td style="font-weight:600">${a}</td><td>${byAno[a].n}</td><td>${fmt(byAno[a].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(byAno[a].ll)}</td></tr>`).join('')}</tbody>
   </table></div></div>`;
 }
 
