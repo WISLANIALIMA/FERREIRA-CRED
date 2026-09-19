@@ -168,7 +168,7 @@ tr:hover td{background:var(--bg3)}
     </div>
     <div class="topbar-right">
       <span class="topbar-user">Olá, <strong id="hdr-user"></strong></span>
-      <button class="eye-btn" onclick="toggleValues()" title="Mostrar/ocultar valores"><span id="eye-icon">👁️</span></button>
+      <button class="eye-btn" onclick="toggleValues()" title="Mostrar/ocultar valores"><span id="eye-icon">🙈</span></button>
       <label class="btn-sm" id="btn-import-lbl" style="cursor:pointer">
         ↑ Importar
         <input type="file" id="file-imp" accept=".xlsx,.xls,.csv" style="display:none">
@@ -542,7 +542,7 @@ const SB_URL='https://tafbghamasevcmrgazgp.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhZmJnaGFtYXNldmNtcmdhemdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTM3NzgsImV4cCI6MjA5NjI4OTc3OH0.39BGYrfo2HQ25t7NtuOZPfxAirGvzxz8PtpNt7ONxEQ';
 const HDR={headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'}};
 
-const GERENTE=['jayana','katia','kátia','daniel','erika','well','juliana','vanny'];
+const GERENTE=['jayana','katia','kátia','daniel','erika','well','juliana','vanny','marcya'];
 const SEM_COMISSAO=['will']; // Produtores próprios que não recebem comissão
 const TAXA_M={'D':2.74,'1':3.74,'2':4.58,'3':5.23,'4':5.87,'5':6.51,'6':7.14,'7':7.96,'8':8.58,'9':9.19,'10':9.80,'11':10.40,'12':11.00,'13':12.39,'14':12.98,'15':13.56,'16':14.14,'17':14.71,'18':15.28};
 const TAXA_H={'D':2.74,'1':4.44,'2':5.62,'3':6.27,'4':6.91,'5':7.55,'6':8.18,'7':9.59,'8':10.21,'9':10.82,'10':11.43,'11':12.03,'12':12.63,'13':13.22,'14':13.81,'15':14.39,'16':14.97,'17':15.54,'18':16.11};
@@ -572,7 +572,8 @@ let PRODS=[
   {nome:'Juliana',tipo:'gerente'},{nome:'JE Empréstimos',tipo:'proprio'},{nome:'Erika',tipo:'gerente'},
   {nome:'Vanny',tipo:'gerente'},
   {nome:'Venda Externa',tipo:'proprio'},
-  {nome:'Edivane',tipo:'proprio'}
+  {nome:'Edivane',tipo:'proprio'},
+  {nome:'Marcya',tipo:'gerente'}
 ];
 let USERS=[];
 let _aTE=0,_aCom=0,_aTab='',_aSC=false,_aEsp=false;
@@ -977,7 +978,7 @@ async function renderLucProd(){
 
 
 // OLHINHO - ocultar/mostrar valores
-let _valuesHidden = false;
+let _valuesHidden = true;
 function toggleValues(){
   _valuesHidden = !_valuesHidden;
   document.querySelectorAll('[data-val]').forEach(el=>{
@@ -987,7 +988,7 @@ function toggleValues(){
 }
 function fmtV(v){
   const s='R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  return `<span data-val="${s}" ${_valuesHidden?'':''}>${_valuesHidden?'••••':s}</span>`;
+  return `<span data-val="${s}">${_valuesHidden?'••••':s}</span>`;
 }
 
 async function init(){
@@ -1352,7 +1353,7 @@ async function renderHoje(){
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
     <td>${o.paplicada?fmtP(o.paplicada):'—'}</td>
-    <td>${fmt(o.lb)}</td><td>${fmt(o.com)}</td>
+    <td>${fmtV(o.lb)}</td><td>${fmtV(o.com)}</td>
     <td style="color:var(--green);font-weight:600">${fmt(o.ll)}</td>
     <td style="display:flex;gap:4px">
       <button class="btn" style="padding:3px 8px;font-size:11px" onclick="copiarOp(${o.id})" title="Copiar">⧉</button>
@@ -1433,7 +1434,7 @@ async function renderOps(){
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
     <td>${o.paplicada?fmtP(o.paplicada):'—'}</td>
     <td>${fmtP(o.taxa_emp||0)}</td>
-    <td>${fmt(o.lb)}</td><td>${fmt(o.com)}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
+    <td>${fmtV(o.lb)}</td><td>${fmtV(o.com)}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
     <td style="color:var(--green);font-weight:600">${fmtV(o.ll)}</td>
     <td><button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="delOp(${o.id})">✕</button></td>
   </tr>`).join('');
@@ -1468,8 +1469,8 @@ async function renderProd(){
       <div class="metric-grid">
         <div class="metric"><div class="metric-lbl">Produção</div><div class="metric-val blue">${fmt(tVP)}</div></div>
         <div class="metric"><div class="metric-lbl">Liberado</div><div class="metric-val">${fmt(tVL)}</div></div>
-        <div class="metric"><div class="metric-lbl">Comissão a pagar</div><div class="metric-val amber">${fmt(tCom)}</div></div>
-        <div class="metric"><div class="metric-lbl">Lucro gerado</div><div class="metric-val green">${fmt(tLL)}</div></div>
+        <div class="metric"><div class="metric-lbl">Comissão a pagar</div><div class="metric-val amber">${fmtV(tCom)}</div></div>
+        <div class="metric"><div class="metric-lbl">Lucro gerado</div><div class="metric-val green">${fmtV(tLL)}</div></div>
       </div>
       <div class="tbl-wrap"><table>
         <thead><tr><th>Data</th><th>Bandeira</th><th>Parc.</th><th>%Aplic.</th><th>Tabela</th><th>Vl.passado</th><th>Vl.liberado</th><th>Lucro bruto</th><th>Comissão</th><th>Lucro líq.</th></tr></thead>
@@ -1479,7 +1480,7 @@ async function renderProd(){
           <td>${o.paplicada?fmtP(o.paplicada):'—'}</td>
           <td>${o.tabela||'—'}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
           <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
-          <td>${fmt(o.lb)}</td><td>${fmt(o.com)}</td>
+          <td>${fmtV(o.lb)}</td><td>${fmtV(o.com)}</td>
           <td style="color:var(--green)">${fmt(o.ll)}</td>
         </tr>`).join('')}${po.length>50?`<tr><td colspan="10" style="color:var(--text3);text-align:center;font-size:12px">+ ${po.length-50} registros (use filtro de data para ver mais)</td></tr>`:''}</tbody>
       </table></div>
@@ -1559,7 +1560,7 @@ async function renderPag(){
         <td style="font-weight:600">${r.p}</td>
         <td><span class="badge ${r.isG?'b-pink':'b-blue'}">${r.isG?'via gerente':'próprio'}</span></td>
         <td>${r.n}</td>
-        <td>${fmt(r.tVL)}</td>
+        <td>${fmtV(r.tVL)}</td>
         <td style="color:var(--amber);font-weight:600">${fmt(r.tCom)}</td>
         <td style="color:var(--green);font-weight:600">${fmt(r.jaPago)}</td>
         <td style="color:${r.pendente>0.01?'var(--red)':'var(--green)'};font-weight:600">${fmtV(r.pendente)}</td>
@@ -1612,8 +1613,8 @@ async function calcGer(){
   window._gd={tVP,tCom,tLL};
   window._gdOps=ops;
   el.innerHTML=`<div class="metric-grid">
-    <div class="metric"><div class="metric-lbl">Produção bruta</div><div class="metric-val blue">${fmt(tVP)}</div></div>
-    <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmt(tCom)}</div></div>
+    <div class="metric"><div class="metric-lbl">Produção bruta</div><div class="metric-val blue">${fmtV(tVP)}</div></div>
+    <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmtV(tCom)}</div></div>
     <div class="metric"><div class="metric-lbl">Lucro líquido base</div><div class="metric-val green">${fmtV(tLL)}</div></div>
   </div>`;
   sw.classList.remove('hidden');updateGer(document.getElementById('ger-sl').value);
@@ -1626,9 +1627,9 @@ function updateGer(pct){
   window._gerPct=pct;
   window._gerComissao=cg;
   document.getElementById('ger-calc').innerHTML=`<div class="preview">
-    <div class="prow"><span>Lucro líquido antes do gerente</span><span>${fmt(d.tLL)}</span></div>
-    <div class="prow"><span>Comissão gerente (${pct.toFixed(1).replace('.',',')}%)</span><span style="color:var(--amber)">- ${fmt(cg)}</span></div>
-    <div class="prow total"><span>Lucro final</span><span style="color:${lf>=0?'var(--green)':'var(--red)'}">${fmt(lf)}</span></div>
+    <div class="prow"><span>Lucro líquido antes do gerente</span><span>${fmtV(d.tLL)}</span></div>
+    <div class="prow"><span>Comissão gerente (${pct.toFixed(1).replace('.',',')}%)</span><span style="color:var(--amber)">- ${fmtV(cg)}</span></div>
+    <div class="prow total"><span>Lucro final</span><span style="color:${lf>=0?'var(--green)':'var(--red)'}">${fmtV(lf)}</span></div>
     ${lf<0?'<div style="font-size:12px;color:var(--red);margin-top:8px">⚠️ Com essa % você opera no prejuízo.</div>':''}
   </div>`;
   document.getElementById('ger-excel-wrap').style.display='block';
@@ -1653,7 +1654,7 @@ async function renderLucDia(){
   </div>
   <div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Data</th><th>Operações</th><th>Produção</th><th>Comissões</th><th>Lucro líquido</th></tr></thead>
-    <tbody>${dias.map(d=>`<tr><td>${d}</td><td>${byDay[d].n}</td><td>${fmt(byDay[d].vp)}</td><td>${fmt(byDay[d].com)}</td><td style="color:var(--green);font-weight:600">${fmtV(byDay[d].ll)}</td></tr>`).join('')}</tbody>
+    <tbody>${dias.map(d=>`<tr><td>${d}</td><td>${byDay[d].n}</td><td>${fmtV(byDay[d].vp)}</td><td>${fmtV(byDay[d].com)}</td><td style="color:var(--green);font-weight:600">${fmtV(byDay[d].ll)}</td></tr>`).join('')}</tbody>
   </table></div></div>`;
 }
 
@@ -1669,7 +1670,7 @@ async function renderLucSem(){
   if(!sems.length){el.innerHTML='<div class="empty">Nenhum dado.</div>';return;}
   el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Semana</th><th>Operações</th><th>Produção</th><th>Lucro líquido</th></tr></thead>
-    <tbody>${sems.map((s,i)=>`<tr><td>Semana ${i+1} (${s})</td><td>${bySem[s].n}</td><td>${fmt(bySem[s].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(bySem[s].ll)}</td></tr>`).join('')}</tbody>
+    <tbody>${sems.map((s,i)=>`<tr><td>Semana ${i+1} (${s})</td><td>${bySem[s].n}</td><td>${fmtV(bySem[s].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(bySem[s].ll)}</td></tr>`).join('')}</tbody>
   </table></div></div>`;
 }
 
@@ -1684,7 +1685,7 @@ async function renderLucMes(){
   if(!meses.length){el.innerHTML=`<div class="empty">Nenhum dado para ${ano}.</div>`;return;}
   el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Mês</th><th>Operações</th><th>Produção</th><th>Lucro líquido</th></tr></thead>
-    <tbody>${meses.map(m=>{const mn=parseInt(m.split('-')[1])-1;return`<tr><td>${nomes[mn]}</td><td>${byMes[m].n}</td><td>${fmt(byMes[m].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(byMes[m].ll)}</td></tr>`;}).join('')}</tbody>
+    <tbody>${meses.map(m=>{const mn=parseInt(m.split('-')[1])-1;return`<tr><td>${nomes[mn]}</td><td>${byMes[m].n}</td><td>${fmtV(byMes[m].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(byMes[m].ll)}</td></tr>`;}).join('')}</tbody>
   </table></div></div>`;
 }
 
@@ -1703,8 +1704,8 @@ async function renderLucLoj(){
     return`<div class="card">
       <div style="font-size:16px;font-weight:600;margin-bottom:12px">${l}</div>
       <div class="metric-grid">
-        <div class="metric"><div class="metric-lbl">Produção</div><div class="metric-val blue">${fmt(lo.reduce((s,o)=>s+Number(o.vpassado),0))}</div></div>
-        <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmt(lo.reduce((s,o)=>s+Number(o.com),0))}</div></div>
+        <div class="metric"><div class="metric-lbl">Produção</div><div class="metric-val blue">${fmtV(lo.reduce((s,o)=>s+Number(o.vpassado),0))}</div></div>
+        <div class="metric"><div class="metric-lbl">Comissões pagas</div><div class="metric-val amber">${fmtV(lo.reduce((s,o)=>s+Number(o.com),0))}</div></div>
         <div class="metric"><div class="metric-lbl">Lucro líquido</div><div class="metric-val green">${fmtV(lo.reduce((s,o)=>s+Number(o.ll),0))}</div></div>
         <div class="metric"><div class="metric-lbl">Operações</div><div class="metric-val">${lo.length}</div></div>
       </div>
@@ -1720,7 +1721,7 @@ async function renderLucAno(){
   const el=document.getElementById('la-content');
   el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
     <thead><tr><th>Ano</th><th>Operações</th><th>Produção total</th><th>Lucro líquido</th></tr></thead>
-    <tbody>${anos.map(a=>`<tr><td style="font-weight:600">${a}</td><td>${byAno[a].n}</td><td>${fmt(byAno[a].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(byAno[a].ll)}</td></tr>`).join('')}</tbody>
+    <tbody>${anos.map(a=>`<tr><td style="font-weight:600">${a}</td><td>${byAno[a].n}</td><td>${fmtV(byAno[a].vp)}</td><td style="color:var(--green);font-weight:600">${fmtV(byAno[a].ll)}</td></tr>`).join('')}</tbody>
   </table></div></div>`;
 }
 
