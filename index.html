@@ -136,6 +136,60 @@ tr:hover td{background:var(--bg3)}
   <div style="font-size:13px;color:#555">Conectando ao banco de dados...</div>
 </div>
 
+<!-- MODAL EDITAR OPERAÇÃO -->
+<div id="modal-edit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h3 style="margin:0;font-size:16px">✏️ Editar Operação</h3>
+      <button onclick="closeEditModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2)">✕</button>
+    </div>
+    <div id="edit-alert"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label>Data</label><input type="date" id="ed-data"></div>
+      <div class="fg"><label>Loja</label>
+        <select id="ed-loja">
+          <option value="Caruaru">Caruaru</option>
+          <option value="Altinho">Altinho</option>
+          <option value="Smart">Smart</option>
+        </select>
+      </div>
+      <div class="fg"><label>Empresa</label>
+        <select id="ed-empresa">
+          <option value="Vale Mais">Vale Mais</option>
+          <option value="Stone">Stone</option>
+        </select>
+      </div>
+      <div class="fg"><label>Bandeira</label>
+        <select id="ed-band">
+          <option value="master">Visa / Mastercard</option>
+          <option value="hiper">Hiper / Elo / Amex</option>
+        </select>
+      </div>
+      <div class="fg"><label>Parcelas</label>
+        <select id="ed-parc">
+          <option value="D">Débito</option>
+          <option value="1">1x</option><option value="2">2x</option><option value="3">3x</option>
+          <option value="4">4x</option><option value="5">5x</option><option value="6">6x</option>
+          <option value="7">7x</option><option value="8">8x</option><option value="9">9x</option>
+          <option value="10">10x</option><option value="11">11x</option><option value="12">12x</option>
+          <option value="13">13x</option><option value="14">14x</option><option value="15">15x</option>
+          <option value="16">16x</option><option value="17">17x</option><option value="18">18x</option>
+        </select>
+      </div>
+      <div class="fg"><label>Banco</label><input type="text" id="ed-banco" placeholder="Ex: NUBANK"></div>
+      <div class="fg"><label>Vl. Passado (R$)</label><input type="number" id="ed-vp" step="0.01" oninput="calcEditPreview()"></div>
+      <div class="fg"><label>Vl. Liberado (R$)</label><input type="number" id="ed-vl" step="0.01" oninput="calcEditPreview()"></div>
+      <div class="fg"><label>% Aplicada (comissão prod.)</label><input type="number" id="ed-papl" step="0.01" placeholder="Automático" oninput="calcEditPreview()"></div>
+      <div class="fg"><label>% Taxa empresa (manual)</label><input type="number" id="ed-te-m" step="0.01" placeholder="Automático" oninput="calcEditPreview()"></div>
+    </div>
+    <div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:var(--radius);font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:4px" id="ed-preview"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn" style="background:#185fa5;color:#fff" onclick="saveEdit()">💾 Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGIN -->
 <div id="login-screen" class="hidden">
   <div class="login-box">
@@ -173,6 +227,7 @@ tr:hover td{background:var(--bg3)}
         ↑ Importar
         <input type="file" id="file-imp" accept=".xlsx,.xls,.csv" style="display:none">
       </label>
+      <button class="btn-sm" onclick="refreshData()" title="Atualizar dados sem deslogar" style="background:var(--green);color:#fff;border-color:var(--green)">↺ Atualizar</button>
       <button class="btn-sm" onclick="doLogout()">Sair</button>
     </div>
   </div>
@@ -207,8 +262,7 @@ tr:hover td{background:var(--bg3)}
           </div>
           <div class="fg"><label>Empresa</label>
             <select id="fs-empresa">
-              <option value="Vale">Vale</option>
-              <option value="Vale Taxa Nova">Vale Taxa Nova</option>
+              <option value="Vale Mais">Vale Mais</option>
               <option value="Stone">Stone</option>
             </select>
           </div>
@@ -261,8 +315,7 @@ tr:hover td{background:var(--bg3)}
           </div>
           <div class="fg"><label>Empresa</label>
             <select id="f-empresa" onchange="autoFill()">
-              <option value="Vale">Vale</option>
-              <option value="Vale Taxa Nova">Vale Taxa Nova</option>
+              <option value="Vale Mais">Vale Mais</option>
               <option value="Stone">Stone</option>
             </select>
           </div>
@@ -343,8 +396,7 @@ tr:hover td{background:var(--bg3)}
           <div class="fg"><label>Empresa</label>
             <select id="fop-emp" onchange="renderOps()">
               <option value="">Todas</option>
-              <option value="Vale">Vale</option>
-              <option value="Vale Taxa Nova">Vale Taxa Nova</option>
+              <option value="Vale Mais">Vale Mais</option>
               <option value="Stone">Stone</option>
             </select>
           </div>
@@ -606,7 +658,7 @@ function hide(id){document.getElementById(id).classList.add('hidden');}
 function getFaixa(p){const n=parseInt(p);if(isNaN(n))return null;if(n<=6)return'f1';if(n<=12)return'f2';if(n<=18)return'f3';return null;}
 function getTaxaEmp(band,parc,empresa){
   if(empresa==='Vale'){return(band==='master'?TAXA_VALLE_M:TAXA_VALLE_H)[parc]||0;}
-  if(empresa==='Vale Taxa Nova'){return(band==='master'?TAXA_VALLE_NOVA_M:TAXA_VALLE_NOVA_H)[parc]||0;}
+  if(empresa==='Vale Mais'){return(band==='master'?TAXA_VALLE_NOVA_M:TAXA_VALLE_NOVA_H)[parc]||0;}
   if(empresa==='Stone'){return(band==='master'?TAXA_STONE_M:TAXA_STONE_H)[parc]||0;}
   return(band==='master'?TAXA_M:TAXA_H)[parc]||0;
 }
@@ -734,7 +786,7 @@ async function buscarCliente(){
           <td>${o.data}</td>
           <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
           <td>${o.produtor}</td>
-          <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale Taxa Nova'?'b-green':o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
+          <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale Mais'?'b-green':'b-blue'}">${o.empresa||'WN'}</span></td>
           <td>${o.bandeira||'—'}</td>
           <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
           <td>${fmt(o.vpassado)}</td>
@@ -844,7 +896,7 @@ async function renderLucEmp(){
   const ops=await sbGet('operacoes',params);
   const el=document.getElementById('le-content');
   if(!ops||!ops.length){el.innerHTML='<div class="empty">Nenhum dado.</div>';return;}
-  const empresas=['Vale','Vale Taxa Nova','Stone'];
+  const empresas=['Vale Mais','Stone'];
   el.innerHTML=empresas.map(e=>{
     const eo=ops.filter(o=>(o.empresa||'WN')===e);
     if(!eo.length)return'';
@@ -915,7 +967,7 @@ async function renderLucEmp(){
   const ops=await sbGet('operacoes',params);
   const el=document.getElementById('le-content');
   if(!ops||!ops.length){el.innerHTML='<div class="empty">Nenhum dado.</div>';return;}
-  const empresas=['Vale','Vale Taxa Nova','Stone'];
+  const empresas=['Vale Mais','Stone'];
   const tVPGeral=ops.reduce((s,o)=>s+Number(o.vpassado),0);
   const tLLGeral=ops.reduce((s,o)=>s+Number(o.ll),0);
   el.innerHTML=`<div class="metric-grid" style="margin-bottom:14px">
@@ -1004,6 +1056,21 @@ async function init(){
     const users=await sbGet('usuarios','select=*');
     if(!Array.isArray(users)||users.length===0){hide('loading');show('login-screen');return;}
     USERS=users;
+    // Tentar restaurar sessão salva no localStorage
+    try{
+      const saved=localStorage.getItem('fc_session');
+      if(saved){
+        const sess=JSON.parse(saved);
+        const user=USERS.find(x=>x.id===sess.id&&x.senha===sess.senha);
+        if(user){
+          CU=user;
+          hide('loading');show('app');
+          document.getElementById('hdr-user').textContent=user.nome;
+          applyRoles();initForm();renderHoje();updateHdr();
+          return;
+        }
+      }
+    }catch(ignored){}
     hide('loading');show('login-screen');
     document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   }catch(e){
@@ -1019,12 +1086,15 @@ async function doLogin(){
   const user=USERS.find(x=>x.login.toLowerCase()===u&&x.senha===p);
   if(!user){document.getElementById('login-alert').innerHTML='<div class="alert alert-danger">Usuário ou senha incorretos.</div>';return;}
   CU=user;
+  // Salvar sessão para persistir entre recarregamentos
+  try{localStorage.setItem('fc_session',JSON.stringify({id:user.id,senha:user.senha}));}catch(ignored){}
   hide('login-screen');show('app');
   document.getElementById('hdr-user').textContent=user.nome;
   applyRoles();initForm();renderHoje();updateHdr();
 }
 function doLogout(){
   CU=null;
+  try{localStorage.removeItem('fc_session');}catch(ignored){}
   // Resetar formulários para estado padrão
   document.getElementById('form-normal').style.display='block';
   document.getElementById('form-suporte').style.display='none';
@@ -1034,6 +1104,10 @@ function doLogout(){
   document.querySelectorAll('[data-roles]').forEach(b=>b.classList.remove('hidden'));
   hide('app');show('login-screen');
   document.getElementById('lu').value='';document.getElementById('lp').value='';
+}
+function refreshData(){
+  renderHoje();updateHdr();
+  showAl('lanc','Dados atualizados!','success');
 }
 
 function applyRoles(){
@@ -1339,7 +1413,7 @@ async function renderHoje(){
   const d=today();
   const ops=await sbGet('operacoes',`data=eq.${d}&order=id.asc`);
   const tb=document.getElementById('hoje-tb'),met=document.getElementById('hoje-met');
-  _lastOps=ops;
+  _lastOps=ops;_lastHoje=ops;
   if(!Array.isArray(ops)||!ops.length){
     tb.innerHTML='<tr><td colspan="12" class="empty">Nenhuma operação hoje.</td></tr>';
     met.innerHTML='';return;
@@ -1356,7 +1430,7 @@ async function renderHoje(){
     <td>${o.hora||'—'}</td>
     <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
     <td>${o.produtor}${o.manual?'<span class="tag-m">manual</span>':''}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
-    <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale Taxa Nova'?'b-green':o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
+    <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale Mais'?'b-green':'b-blue'}">${o.empresa||'WN'}</span></td>
     <td>${o.bandeira||'—'}</td>
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
@@ -1364,6 +1438,7 @@ async function renderHoje(){
     <td>${fmtV(o.lb)}</td><td>${fmtV(o.com)}</td>
     <td style="color:var(--green);font-weight:600">${fmt(o.ll)}</td>
     <td style="display:flex;gap:4px">
+      <button class="btn" style="padding:3px 8px;font-size:11px" onclick="openEditModal(${o.id})" title="Editar">✏️</button>
       <button class="btn" style="padding:3px 8px;font-size:11px" onclick="copiarOp(${o.id})" title="Copiar">⧉</button>
       <button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="delOp(${o.id})" title="Excluir">✕</button>
     </td>
@@ -1391,13 +1466,95 @@ function copiarOp(id){
   document.getElementById('sec-lanc').scrollIntoView();
   showAl('lanc','Operação copiada! Verifique os dados e salve.','info');
 }
-let _lastOps=[];
+let _lastOps=[];let _lastHoje=[];
 
 async function delOp(id){
   if(!confirm('Excluir operação?'))return;
   await sbDelete('operacoes',`id=eq.${id}`);
   renderHoje();renderOps();updateHdr();
 }
+
+let _editId=null;
+function openEditModal(id){
+  const op=(_lastOps||[]).find(o=>o.id===id)||(_lastHoje||[]).find(o=>o.id===id);
+  if(!op){alert('Operação não encontrada.');return;}
+  _editId=id;
+  document.getElementById('ed-data').value=op.data||'';
+  document.getElementById('ed-loja').value=op.loja||'Caruaru';
+  document.getElementById('ed-empresa').value=op.empresa||'Vale Mais';
+  document.getElementById('ed-band').value=op.band_code||'master';
+  document.getElementById('ed-parc').value=op.parcelas||'1';
+  document.getElementById('ed-banco').value=op.banco||'';
+  document.getElementById('ed-vp').value=op.vpassado||'';
+  document.getElementById('ed-vl').value=op.vliberado||'';
+  document.getElementById('ed-papl').value=op.paplicada||'';
+  document.getElementById('ed-te-m').value='';
+  document.getElementById('edit-alert').innerHTML='';
+  calcEditPreview();
+  const m=document.getElementById('modal-edit');
+  m.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeEditModal(){
+  document.getElementById('modal-edit').style.display='none';
+  document.body.style.overflow='';
+  _editId=null;
+}
+function calcEditPreview(){
+  const vp=parseFloat(document.getElementById('ed-vp').value)||0;
+  const vl=parseFloat(document.getElementById('ed-vl').value)||0;
+  const band=document.getElementById('ed-band').value;
+  const parc=document.getElementById('ed-parc').value;
+  const empresa=document.getElementById('ed-empresa').value;
+  const teManual=parseFloat(document.getElementById('ed-te-m').value)||0;
+  const paplManual=parseFloat(document.getElementById('ed-papl').value)||0;
+  if(!vp||!vl){document.getElementById('ed-preview').innerHTML='';return;}
+  const te=teManual>0?teManual:getTaxaEmp(band,parc,empresa);
+  const cp=paplManual>0?paplManual:0;
+  const r=calcOp(vp,vl,te,cp);
+  document.getElementById('ed-preview').innerHTML=
+    `<div><span style="color:var(--text2)">Taxa empresa:</span> <b>${te.toFixed(2)}%</b></div>`+
+    `<div><span style="color:var(--text2)">Lucro bruto:</span> <b>${fmt(r.lb)}</b></div>`+
+    `<div><span style="color:var(--text2)">Comissão:</span> <b>${fmt(r.com)}</b></div>`+
+    `<div><span style="color:var(--green);font-weight:600">Lucro líquido: ${fmt(r.ll)}</span></div>`;
+}
+async function saveEdit(){
+  if(!_editId)return;
+  const vp=parseFloat(document.getElementById('ed-vp').value)||0;
+  const vl=parseFloat(document.getElementById('ed-vl').value)||0;
+  if(!vp||!vl){document.getElementById('edit-alert').innerHTML='<div class="alert alert-danger">Preencha Vl. Passado e Vl. Liberado.</div>';return;}
+  const band=document.getElementById('ed-band').value;
+  const parc=document.getElementById('ed-parc').value;
+  const empresa=document.getElementById('ed-empresa').value;
+  const teManual=parseFloat(document.getElementById('ed-te-m').value)||0;
+  const paplManual=parseFloat(document.getElementById('ed-papl').value)||0;
+  const bandLabels={'master':'Visa / Mastercard','hiper':'Hiper / Elo / Amex'};
+  const te=teManual>0?teManual:getTaxaEmp(band,parc,empresa);
+  const r=calcOp(vp,vl,te,paplManual);
+  const payload={
+    data:document.getElementById('ed-data').value,
+    loja:document.getElementById('ed-loja').value,
+    empresa,
+    bandeira:bandLabels[band]||band,
+    band_code:band,
+    parcelas:parc,
+    banco:document.getElementById('ed-banco').value,
+    vpassado:vp,
+    vliberado:vl,
+    paplicada:paplManual||null,
+    taxa_emp:te,
+    taxa:r.taxa,sobra:r.sobra,lb:r.lb,com:r.com,ll:r.ll,
+    manual:true
+  };
+  try{
+    await sbPatch('operacoes',`id=eq.${_editId}`,payload);
+    closeEditModal();
+    renderHoje();renderOps();updateHdr();
+  }catch(e){
+    document.getElementById('edit-alert').innerHTML='<div class="alert alert-danger">Erro ao salvar. Tente novamente.</div>';
+  }
+}
+document.getElementById('modal-edit').addEventListener('click',function(e){if(e.target===this)closeEditModal();});
 
 async function updateHdr(){
   const mes=today().substring(0,7);
@@ -1432,11 +1589,12 @@ async function renderOps(){
     <div class="metric"><div class="metric-lbl">Comissões</div><div class="metric-val amber">${fmtV(tCom)}</div></div>
     <div class="metric"><div class="metric-lbl">Operações</div><div class="metric-val">${ops.length}</div></div>`;
   document.getElementById('ops-info').textContent=ops.length>=500?'Mostrando até 500 registros. Use filtros para refinar.':'';
+  _lastOps=ops;
   tb.innerHTML=ops.map(o=>`<tr>
     <td>${o.data}</td>
     <td><span class="badge ${o.loja==='Caruaru'?'b-blue':'b-amber'}">${o.loja}</span></td>
     <td>${o.produtor}${o.manual?'<span class="tag-m">manual</span>':''}</td>
-    <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale Taxa Nova'?'b-green':o.empresa==='Vale'?'b-pink':'b-blue'}">${o.empresa||'WN'}</span></td>
+    <td><span class="badge ${o.empresa==='Stone'?'b-amber':o.empresa==='Vale Mais'?'b-green':'b-blue'}">${o.empresa||'WN'}</span></td>
     <td>${o.bandeira||'—'}</td>
     <td>${o.parcelas==='D'?'Débito':o.parcelas+'x'}</td>
     <td>${fmt(o.vpassado)}</td><td>${fmt(o.vliberado)}</td>
@@ -1444,7 +1602,10 @@ async function renderOps(){
     <td>${fmtP(o.taxa_emp||0)}</td>
     <td>${fmtV(o.lb)}</td><td>${fmtV(o.com)}${o.sem_com?'<span class="tag-sc">sem com.</span>':''}</td>
     <td style="color:var(--green);font-weight:600">${fmtV(o.ll)}</td>
-    <td><button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="delOp(${o.id})">✕</button></td>
+    <td style="display:flex;gap:4px">
+      <button class="btn" style="padding:3px 8px;font-size:11px" onclick="openEditModal(${o.id})" title="Editar">✏️</button>
+      <button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="delOp(${o.id})" title="Excluir">✕</button>
+    </td>
   </tr>`).join('');
   const fp=document.getElementById('fop-pr');
   const cur=fp.value;
