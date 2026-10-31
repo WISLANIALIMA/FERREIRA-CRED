@@ -1106,8 +1106,41 @@ function doLogout(){
   document.getElementById('lu').value='';document.getElementById('lp').value='';
 }
 function refreshData(){
-  renderHoje();updateHdr();
-  showAl('lanc','Dados atualizados!','success');
+  updateHdr();
+  // Detectar seção ativa e recarregar
+  const secAtiva=document.querySelector('.section.active');
+  const sid=secAtiva?secAtiva.id:'';
+  if(sid==='sec-lanc'){renderHoje();}
+  else if(sid==='sec-ops'){renderOps();}
+  else if(sid==='sec-prod'){renderProd();}
+  else if(sid==='sec-pag'){
+    // detectar sub-aba ativa em pagamentos
+    const tabPag=document.querySelector('#sec-pag .tab.active');
+    const tabId=tabPag?tabPag.getAttribute('onclick'):'';
+    if(tabId.includes('tp-baixas'))renderPagBaixas();
+    else if(tabId.includes('tp-ger'))renderPagGer();
+    else renderPag();
+  }
+  else if(sid==='sec-luc'){
+    // detectar sub-aba ativa em lucros
+    const tabLuc=document.querySelector('#sec-luc .tab.active');
+    const tabId=tabLuc?tabLuc.getAttribute('onclick'):'';
+    if(tabId.includes('tl-sem'))renderLucSem();
+    else if(tabId.includes('tl-mes'))renderLucMes();
+    else if(tabId.includes('tl-loj'))renderLucLoj();
+    else if(tabId.includes('tl-ano'))renderLucAno();
+    else if(tabId.includes('tl-emp'))renderLucEmp();
+    else if(tabId.includes('tl-pprod'))renderLucProd();
+    else renderLucDia();
+  }
+  else if(sid==='sec-clientes'){if(typeof renderClientes==='function')renderClientes();}
+  else{renderHoje();}
+  // Mostrar feedback no topo
+  const fb=document.createElement('div');
+  fb.style.cssText='position:fixed;top:56px;right:16px;z-index:999;background:var(--green);color:#fff;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+  fb.textContent='✓ Dados atualizados!';
+  document.body.appendChild(fb);
+  setTimeout(()=>fb.remove(),2000);
 }
 
 function applyRoles(){
